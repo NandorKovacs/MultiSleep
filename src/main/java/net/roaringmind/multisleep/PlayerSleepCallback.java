@@ -2,15 +2,15 @@ package net.roaringmind.multisleep;
 
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
-import net.minecraft.block.BedBlock;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.ActionResult;
+import net.minecraft.util.math.BlockPos;
 
 public interface PlayerSleepCallback {
   Event<PlayerSleepCallback> EVENT = EventFactory.createArrayBacked(PlayerSleepCallback.class,
-      (listeners) -> (player, bed) -> {
+      (listeners) -> (player, pos) -> {
         for (PlayerSleepCallback listener : listeners) {
-          ActionResult result = listener.interact(player, bed);
+          ActionResult result = listener.interact(player, pos);
 
           if (result != ActionResult.PASS) {
             return result;
@@ -20,5 +20,5 @@ public interface PlayerSleepCallback {
         return ActionResult.PASS;
       });
 
-  ActionResult interact(PlayerEntity player, BedBlock bed);
+  ActionResult interact(PlayerEntity player, BlockPos bedPosition);
 }
