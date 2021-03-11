@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "id": "multisleep",
+  "version": "${version}",
+  "name": "Multiplayer Sleep",
+  "description": "This mod assists sleeping on servers",
+  "authors": [
+    "Roaringmind"
+  ],
+  "contributors": [],
+  "contact": {},
+  "license": "All-Rights-Reserved",
+  "icon": "assets/multisleep/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "net.roaringmind.multisleep.MultiSleep"
+    ],
+    "client": [],
+    "server": []
+  },
+  "mixins": [
+    "multisleep.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.11.1",
+    "fabric": "*"
+  }
+}

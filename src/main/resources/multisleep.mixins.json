@@ -1,0 +1,11 @@
+{
+  "required": true,
+  "package": "net.roaringmind.multisleep.mixin",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [],
+  "client": ["PlayerSleepMixin", "InventoryButtonMixin"],
+  "server": [],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
