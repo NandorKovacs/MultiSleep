@@ -54,7 +54,7 @@ public class MultiSleep implements ModInitializer {
       dispatcher.register(literal("vote").executes(context -> {
         MinecraftClient mc = MinecraftClient.getInstance();
 
-        mc.openScreen(new CottonClientScreen(new SleepGUI()));
+        mc.openScreen(new CottonClientScreen(new SleepGUI(this)));
 
         return 1;
       }));
