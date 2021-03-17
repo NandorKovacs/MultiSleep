@@ -13,6 +13,7 @@ import net.minecraft.client.gui.widget.TexturedButtonWidget;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.util.Identifier;
+import net.roaringmind.multisleep.MultiSleep;
 import net.roaringmind.multisleep.SleepGUI;
 
 @Mixin(InventoryScreen.class)
@@ -39,7 +40,7 @@ public abstract class InventoryButtonMixin extends AbstractInventoryScreen<Playe
 
                     MinecraftClient mc = MinecraftClient.getInstance();
 
-                    mc.openScreen(new CottonClientScreen(new SleepGUI()));
+                    mc.openScreen(new CottonClientScreen(new SleepGUI(/*TODO: somehow get multisleep instance, probably impossible*/)));
                   });
         this.addButton(myButton);
     }

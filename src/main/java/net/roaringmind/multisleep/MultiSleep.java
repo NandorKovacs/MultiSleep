@@ -86,7 +86,6 @@ public class MultiSleep implements ModInitializer {
   public void startVoting(PlayerEntity initiator) {
     broadcast("Voting for Sleep, Voting started by " + initiator.getName());
     for (AbstractClientPlayerEntity player : getPlayers()) {
-
     }
   }
 
