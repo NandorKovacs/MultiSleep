@@ -3,8 +3,7 @@ package net.roaringmind.multisleep;
 import static net.minecraft.server.command.CommandManager.literal;
 
 import java.util.List;
-
-import javax.lang.model.element.TypeElement;
+import java.util.Set;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -13,15 +12,16 @@ import org.apache.logging.log4j.Logger;
 import io.github.cottonmc.cotton.gui.client.CottonClientScreen;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.gamerule.v1.GameRuleFactory;
+import net.fabricmc.fabric.api.gamerule.v1.GameRuleRegistry;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
-import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
+import net.minecraft.world.GameRules.Category;
+import net.minecraft.world.GameRules.IntRule;
+import net.minecraft.world.GameRules.Key;
 
 public class MultiSleep implements ModInitializer {
 
@@ -49,7 +49,16 @@ public class MultiSleep implements ModInitializer {
     }
   }
 
+  Key<IntRule> multisleeppercent_key;
+
   void registerCommands() {
+    if (GameRuleRegistry.hasRegistration("MultiSleepPercent")) {
+      log(Level.WARN,
+          "Can't register gamerule, other gamerule with the same name is already existing. please remove incompatible mods to be able to use the gamerule \"MultiSleepPercent\"");
+    } else {
+      multisleeppercent_key = GameRuleRegistry.register("MultiSleepPercent", Category.MISC,
+          GameRuleFactory.createIntRule(0, 0, 100));
+    }
     CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> {
       dispatcher.register(literal("vote").executes(context -> {
         MinecraftClient mc = MinecraftClient.getInstance();
@@ -72,10 +81,11 @@ public class MultiSleep implements ModInitializer {
     PlayerSleepCallback.EVENT.register((player, pos) -> {
       System.out.println("XXXXX sleep");
 
-      /*ItemStack stack = new ItemStack(Items.DIAMOND);
-      ItemEntity itemEntity = new ItemEntity(player.world, pos.getX(), pos.getY(), pos.getZ(), stack);
-      player.world.spawnEntity(itemEntity);
-      */
+      /*
+       * ItemStack stack = new ItemStack(Items.DIAMOND); ItemEntity itemEntity = new
+       * ItemEntity(player.world, pos.getX(), pos.getY(), pos.getZ(), stack);
+       * player.world.spawnEntity(itemEntity);
+       */
 
       startVoting(player);
 
@@ -83,10 +93,58 @@ public class MultiSleep implements ModInitializer {
     });
   }
 
+  public Set<PlayerEntity> afkPlayers;
+  public Set<PlayerEntity> votedYes;
+  public Set<PlayerEntity> votedNo;
+  public boolean voting = false;
+
   public void startVoting(PlayerEntity initiator) {
     broadcast("Voting for Sleep, Voting started by " + initiator.getName());
+    voting = true;
     for (AbstractClientPlayerEntity player : getPlayers()) {
+      if (afkPlayers.contains(player)) {
+        votedYes.add(player);
+      }
     }
+  }
+
+  public void stopSleep() {
+    voting = false;
+    votedYes.clear();
+    votedNo.clear();
+  }
+
+  public void checkVotes(PlayerEntity player) {
+    int playerCount = getPlayers().size();
+    int percent = player.getServer().getGameRules().getInt(multisleeppercent_key);
+    if (votedYes.size() / playerCount * 100 < percent) {
+      sleep();
+      return;
+    }
+    if (votedNo.size() / playerCount * 100 < percent) {
+      stopSleep();
+      return;
+    }
+  }
+
+  public void vote(boolean sleep, PlayerEntity player) {
+    if (sleep) {
+      votedYes.add(player);
+    } else {
+      int percent = player.getServer().getGameRules().getInt(multisleeppercent_key);
+      if (percent == 0) {
+        stopSleep();
+        return;
+      } else {
+        votedNo.add(player);
+      }
+    }
+
+    checkVotes(player);
+  }
+
+  public void sleep() {
+    // TODO: initiate sleeping
   }
 
   public static void log(Level level, String message) {
