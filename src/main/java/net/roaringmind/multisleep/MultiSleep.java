@@ -91,6 +91,12 @@ public class MultiSleep implements ModInitializer {
       }
       return ActionResult.PASS;
     });
+    ButtonClickCallback.EVENT.register((player) -> {
+      MinecraftClient mc = MinecraftClient.getInstance();
+
+      mc.openScreen(new CottonClientScreen(new SleepGUI(this)));
+      return ActionResult.SUCCESS;
+    });
   }
 
   public Set<PlayerEntity> afkPlayers;
@@ -103,7 +109,7 @@ public class MultiSleep implements ModInitializer {
       broadcast("Sleep tight" + initiator.getName());
       return;
     }
-    
+
     broadcast("Voting for Sleep, Voting started by " + initiator.getName());
     voting = true;
     for (AbstractClientPlayerEntity player : getPlayers()) {
@@ -148,8 +154,8 @@ public class MultiSleep implements ModInitializer {
     checkVotes(player);
   }
 
-
   public boolean sleepNow = false;
+
   public void sleep() {
     sleepNow = true;
     stopVoting();

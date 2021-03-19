@@ -12,7 +12,9 @@ import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.client.gui.widget.TexturedButtonWidget;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.screen.PlayerScreenHandler;
+import net.minecraft.util.ActionResult;
 import net.minecraft.util.Identifier;
+import net.roaringmind.multisleep.ButtonClickCallback;
 import net.roaringmind.multisleep.MultiSleep;
 import net.roaringmind.multisleep.SleepGUI;
 
@@ -38,10 +40,14 @@ public abstract class InventoryButtonMixin extends AbstractInventoryScreen<Playe
                 RECIPE_BUTTON_TEXTURE2, (buttonWidget) -> {
                     //System.out.println("XXXXX click");
 
-                    MinecraftClient mc = MinecraftClient.getInstance();
+                    //MinecraftClient mc = MinecraftClient.getInstance();
+                    //mc.openScreen(new CottonClientScreen(new SleepGUI(/*TODO: somehow get multisleep instance, probably impossible*/)));
 
+                    ActionResult result = ButtonClickCallback.EVENT.invoker().interact(this.client.player);
 
-                    mc.openScreen(new CottonClientScreen(new SleepGUI(/*TODO: somehow get multisleep instance, probably impossible*/)));
+                    if (result == ActionResult.SUCCESS) {
+                      System.out.println("Clicked the Button");
+                    }
                   });
         this.addButton(myButton);
     }
