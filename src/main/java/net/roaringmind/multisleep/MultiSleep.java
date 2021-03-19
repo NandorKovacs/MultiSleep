@@ -79,16 +79,16 @@ public class MultiSleep implements ModInitializer {
 
   void registerEvents() {
     PlayerSleepCallback.EVENT.register((player, pos) -> {
-      System.out.println("XXXXX sleep");
-
-      /*
-       * ItemStack stack = new ItemStack(Items.DIAMOND); ItemEntity itemEntity = new
-       * ItemEntity(player.world, pos.getX(), pos.getY(), pos.getZ(), stack);
-       * player.world.spawnEntity(itemEntity);
-       */
 
       startVoting(player);
 
+      return ActionResult.PASS;
+    });
+    WorldSleepCallback.EVENT.register(() -> {
+      if (sleepNow) {
+        sleepNow = false;
+        return ActionResult.SUCCESS;
+      }
       return ActionResult.PASS;
     });
   }
@@ -99,6 +99,11 @@ public class MultiSleep implements ModInitializer {
   public boolean voting = false;
 
   public void startVoting(PlayerEntity initiator) {
+    if (getPlayers().size() == 1) {
+      broadcast("Sleep tight" + initiator.getName());
+      return;
+    }
+    
     broadcast("Voting for Sleep, Voting started by " + initiator.getName());
     voting = true;
     for (AbstractClientPlayerEntity player : getPlayers()) {
@@ -108,7 +113,7 @@ public class MultiSleep implements ModInitializer {
     }
   }
 
-  public void stopSleep() {
+  public void stopVoting() {
     voting = false;
     votedYes.clear();
     votedNo.clear();
@@ -122,7 +127,7 @@ public class MultiSleep implements ModInitializer {
       return;
     }
     if (votedNo.size() / playerCount * 100 < percent) {
-      stopSleep();
+      stopVoting();
       return;
     }
   }
@@ -133,7 +138,7 @@ public class MultiSleep implements ModInitializer {
     } else {
       int percent = player.getServer().getGameRules().getInt(multisleeppercent_key);
       if (percent == 0) {
-        stopSleep();
+        stopVoting();
         return;
       } else {
         votedNo.add(player);
@@ -143,12 +148,14 @@ public class MultiSleep implements ModInitializer {
     checkVotes(player);
   }
 
+
+  public boolean sleepNow = false;
   public void sleep() {
-    // TODO: initiate sleeping
+    sleepNow = true;
+    stopVoting();
   }
 
   public static void log(Level level, String message) {
     LOGGER.log(level, "[" + MOD_NAME + "] " + message);
   }
-
 }

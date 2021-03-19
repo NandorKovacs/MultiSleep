@@ -40,6 +40,7 @@ public abstract class InventoryButtonMixin extends AbstractInventoryScreen<Playe
 
                     MinecraftClient mc = MinecraftClient.getInstance();
 
+
                     mc.openScreen(new CottonClientScreen(new SleepGUI(/*TODO: somehow get multisleep instance, probably impossible*/)));
                   });
         this.addButton(myButton);
