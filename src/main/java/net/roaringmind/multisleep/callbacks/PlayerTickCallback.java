@@ -1,14 +1,14 @@
-package net.roaringmind.multisleep;
+package net.roaringmind.multisleep.callbacks;
 
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.ActionResult;
 
-public interface ButtonClickCallback {
-  Event<ButtonClickCallback> EVENT = EventFactory.createArrayBacked(ButtonClickCallback.class,
+public interface PlayerTickCallback {
+  Event<PlayerTickCallback> EVENT = EventFactory.createArrayBacked(PlayerTickCallback.class,
       (listeners) -> (player) -> {
-        for (ButtonClickCallback listener : listeners) {
+        for (PlayerTickCallback listener : listeners) {
           ActionResult result = listener.interact(player);
 
           if (result != ActionResult.PASS) {
@@ -20,4 +20,5 @@ public interface ButtonClickCallback {
       });
 
   ActionResult interact(PlayerEntity player);
+
 }

@@ -5,8 +5,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import io.github.cottonmc.cotton.gui.client.CottonClientScreen;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.AbstractInventoryScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.client.gui.widget.TexturedButtonWidget;
@@ -14,9 +12,7 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Identifier;
-import net.roaringmind.multisleep.ButtonClickCallback;
-import net.roaringmind.multisleep.MultiSleep;
-import net.roaringmind.multisleep.SleepGUI;
+import net.roaringmind.multisleep.callbacks.ButtonClickCallback;
 
 @Mixin(InventoryScreen.class)
 public abstract class InventoryButtonMixin extends AbstractInventoryScreen<PlayerScreenHandler> {

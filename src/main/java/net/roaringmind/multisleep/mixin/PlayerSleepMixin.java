@@ -13,7 +13,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Unit;
 import net.minecraft.util.math.BlockPos;
-import net.roaringmind.multisleep.PlayerSleepCallback;
+import net.roaringmind.multisleep.callbacks.PlayerSleepCallback;
 
 @Mixin(PlayerEntity.class)
 public abstract class PlayerSleepMixin extends LivingEntity {

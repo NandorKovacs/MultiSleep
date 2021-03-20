@@ -1,4 +1,4 @@
-package net.roaringmind.multisleep;
+package net.roaringmind.multisleep.callbacks;
 
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;

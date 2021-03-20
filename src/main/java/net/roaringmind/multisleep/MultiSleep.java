@@ -2,8 +2,10 @@ package net.roaringmind.multisleep;
 
 import static net.minecraft.server.command.CommandManager.literal;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -22,6 +24,10 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.world.GameRules.Category;
 import net.minecraft.world.GameRules.IntRule;
 import net.minecraft.world.GameRules.Key;
+import net.roaringmind.multisleep.callbacks.ButtonClickCallback;
+import net.roaringmind.multisleep.callbacks.PlayerSleepCallback;
+import net.roaringmind.multisleep.callbacks.PlayerTickCallback;
+import net.roaringmind.multisleep.callbacks.WorldSleepCallback;
 
 public class MultiSleep implements ModInitializer {
 
@@ -97,9 +103,17 @@ public class MultiSleep implements ModInitializer {
       mc.openScreen(new CottonClientScreen(new SleepGUI(this)));
       return ActionResult.SUCCESS;
     });
+    PlayerTickCallback.EVENT.register((player) -> {
+      UUID name = player.getUuid();
+      if (afkPlayers.containsKey(name) && !afkPlayers.get(name).check()) {
+        afkPlayers.remove(name);
+        return ActionResult.SUCCESS;
+      }
+      return ActionResult.PASS;
+    });
   }
 
-  public Set<PlayerEntity> afkPlayers;
+  public HashMap<UUID, AFKPlayer> afkPlayers;
   public Set<PlayerEntity> votedYes;
   public Set<PlayerEntity> votedNo;
   public boolean voting = false;
@@ -113,7 +127,7 @@ public class MultiSleep implements ModInitializer {
     broadcast("Voting for Sleep, Voting started by " + initiator.getName());
     voting = true;
     for (AbstractClientPlayerEntity player : getPlayers()) {
-      if (afkPlayers.contains(player)) {
+      if (afkPlayers.containsKey(player.getUuid())) {
         votedYes.add(player);
       }
     }

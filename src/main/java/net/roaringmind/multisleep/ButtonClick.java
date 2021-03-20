@@ -16,10 +16,21 @@ public class ButtonClick implements Runnable {
   public void run() {
     switch (vote) {
     case YES:
+      if (instance.voting == true) {
+        instance.vote(true, player);
+      }
       break;
     case NO:
+
+      if (instance.voting == true) {
+        instance.vote(false, player);
+      }
       break;
     case AFK:
+    AFKPlayer afkPlayer = new AFKPlayer(player);
+      if (!instance.afkPlayers.containsKey(player.getUuid())) {
+        instance.afkPlayers.put(player.getUuid(), afkPlayer);
+      }
       break;
     }
 
