@@ -37,7 +37,7 @@ public abstract class InventoryButtonMixin extends AbstractInventoryScreen<Playe
                     //System.out.println("XXXXX click");
 
                     //MinecraftClient mc = MinecraftClient.getInstance();
-                    //mc.openScreen(new CottonClientScreen(new SleepGUI(/*TODO: somehow get multisleep instance, probably impossible*/)));
+                    //mc.openScreen(new CottonClientScreen(new SleepGUI()));
 
                     ActionResult result = ButtonClickCallback.EVENT.invoker().interact(this.client.player);
 
