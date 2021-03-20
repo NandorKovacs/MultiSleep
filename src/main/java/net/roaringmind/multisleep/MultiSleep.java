@@ -49,9 +49,9 @@ public class MultiSleep implements ModInitializer {
     return MinecraftClient.getInstance().world.getPlayers();
   }
 
-  public void broadcast(String message) {
+  public void broadcast(String message, boolean toolbar) {
     for (AbstractClientPlayerEntity player : getPlayers()) {
-      player.sendMessage(Text.of(message), true);
+      player.sendMessage(Text.of(message), toolbar);;
     }
   }
 
@@ -75,7 +75,7 @@ public class MultiSleep implements ModInitializer {
       }));
 
       dispatcher.register(literal("broadcast").executes(context -> {
-        broadcast("hello");
+        broadcast("hello", true);
 
         return 1;
       }));
@@ -85,9 +85,11 @@ public class MultiSleep implements ModInitializer {
 
   void registerEvents() {
     PlayerSleepCallback.EVENT.register((player, pos) -> {
-
+      if (voting) {
+        vote(true, player);
+        return ActionResult.PASS;
+      }
       startVoting(player);
-
       return ActionResult.PASS;
     });
     WorldSleepCallback.EVENT.register(() -> {
@@ -120,11 +122,11 @@ public class MultiSleep implements ModInitializer {
 
   public void startVoting(PlayerEntity initiator) {
     if (getPlayers().size() == 1) {
-      broadcast("Sleep tight" + initiator.getName());
+      broadcast("Sleep tight" + initiator.getName(), true);
       return;
     }
 
-    broadcast("Voting for Sleep, Voting started by " + initiator.getName());
+    broadcast("Voting for Sleep, Voting started by " + initiator.getName(), true);
     voting = true;
     for (AbstractClientPlayerEntity player : getPlayers()) {
       if (afkPlayers.containsKey(player.getUuid())) {
@@ -153,18 +155,21 @@ public class MultiSleep implements ModInitializer {
   }
 
   public void vote(boolean sleep, PlayerEntity player) {
+    int percent = player.getServer().getGameRules().getInt(multisleeppercent_key);
     if (sleep) {
+      if (percent == 0) {
+        sleep();
+        return;
+      }
       votedYes.add(player);
     } else {
-      int percent = player.getServer().getGameRules().getInt(multisleeppercent_key);
-      if (percent == 0) {
+      if (percent == 100) {
         stopVoting();
         return;
       } else {
         votedNo.add(player);
       }
     }
-
     checkVotes(player);
   }
 
