@@ -23,7 +23,7 @@ public abstract class PlayerTickMixin extends LivingEntity {
   @Inject(method = "tick", at = @At("HEAD"))
   public void searchAFK(final CallbackInfo info) {
     ActionResult result = PlayerTickCallback.EVENT.invoker().interact((PlayerEntity) (Object) this);
-    if (result != ActionResult.SUCCESS) {
+    if (result == ActionResult.FAIL) {
       self.sendMessage(Text.of("No longer AFK"), true);
     }
 
