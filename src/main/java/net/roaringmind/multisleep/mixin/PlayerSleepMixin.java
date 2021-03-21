@@ -21,6 +21,10 @@ public abstract class PlayerSleepMixin extends LivingEntity {
   PlayerSleepMixin() {
     super(null, null);
   }
+  public boolean wants_phantoms;
+  public boolean getPhantom() {
+    return wants_phantoms;
+  }
 
   @Inject(method = "trySleep", at = @At(value = "HEAD"), cancellable = true)
   private void onTrySleep(final BlockPos pos, final CallbackInfoReturnable<Either<PlayerEntity.SleepFailureReason, Unit>> info) {
@@ -33,14 +37,5 @@ public abstract class PlayerSleepMixin extends LivingEntity {
       player.sendMessage(Text.of("oh oh, somethings wrong"), true);
       info.setReturnValue(Either.left(PlayerEntity.SleepFailureReason.OTHER_PROBLEM));
     }
-    /*
-     * System.out.println("XXXXX sleep");
-     *
-     * ItemStack stack = new ItemStack(Items.DIAMOND); ItemEntity itemEntity = new
-     * ItemEntity(player.world, pos.getX(), pos.getY(), pos.getZ(), stack);
-     * player.world.spawnEntity(itemEntity);
-     *
-     * info.setReturnValue(ActionResult.SUCCESS);
-     */
   }
 }

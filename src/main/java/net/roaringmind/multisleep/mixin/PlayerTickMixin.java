@@ -5,13 +5,19 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
+import net.roaringmind.multisleep.MultiSleep;
 import net.roaringmind.multisleep.callbacks.PlayerTickCallback;
 
 @Mixin(PlayerEntity.class)
-public class PlayerTickMixin {
+public abstract class PlayerTickMixin extends LivingEntity {
+  PlayerTickMixin() {
+    super(null, null);
+  }
+
   PlayerEntity self = (PlayerEntity) (Object) this;
 
   @Inject(method = "tick", at = @At("HEAD"))
@@ -20,5 +26,7 @@ public class PlayerTickMixin {
     if (result != ActionResult.SUCCESS) {
       self.sendMessage(Text.of("No longer AFK"), true);
     }
+
+    self.incrementStat(MultiSleep.TIME_SINCE_SLEPT_IN_BED);
   }
 }

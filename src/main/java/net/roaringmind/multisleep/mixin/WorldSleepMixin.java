@@ -10,10 +10,16 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.ActionResult;
+import net.minecraft.world.World;
 import net.roaringmind.multisleep.callbacks.WorldSleepCallback;
 
 @Mixin(ServerWorld.class)
-public class WorldSleepMixin {
+public abstract class WorldSleepMixin extends World {
+
+  WorldSleepMixin() {
+    super(null, null, null, null, null, null, null);
+  }
+
   ServerWorld self = (ServerWorld) (Object) this;
 
   @Shadow

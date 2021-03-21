@@ -13,14 +13,19 @@ import org.apache.logging.log4j.Logger;
 
 import io.github.cottonmc.cotton.gui.client.CottonClientScreen;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.gamerule.v1.GameRuleFactory;
 import net.fabricmc.fabric.api.gamerule.v1.GameRuleRegistry;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.stat.StatFormatter;
+import net.minecraft.stat.Stats;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.world.GameRules.Category;
 import net.minecraft.world.GameRules.IntRule;
 import net.minecraft.world.GameRules.Key;
@@ -35,10 +40,12 @@ public class MultiSleep implements ModInitializer {
 
   public static final String MOD_ID = "multisleep";
   public static final String MOD_NAME = "Multiplayer Sleep";
-
+  public static final Identifier TIME_SINCE_SLEPT_IN_BED = new Identifier("multisleep", "time_since_last_slept_in_bed");
   @Override
   public void onInitialize() {
     log(Level.INFO, "Initializing");
+
+    registerStats();
 
     registerEvents();
 
@@ -51,11 +58,17 @@ public class MultiSleep implements ModInitializer {
 
   public void broadcast(String message, boolean toolbar) {
     for (AbstractClientPlayerEntity player : getPlayers()) {
-      player.sendMessage(Text.of(message), toolbar);;
+      player.sendMessage(Text.of(message), toolbar);
+      ;
     }
   }
 
   Key<IntRule> multisleeppercent_key;
+
+  void registerStats() {
+    Registry.register(Registry.CUSTOM_STAT, "time_since_last_slept_in_bed", TIME_SINCE_SLEPT_IN_BED);
+    Stats.CUSTOM.getOrCreateStat(TIME_SINCE_SLEPT_IN_BED, StatFormatter.TIME);
+  }
 
   void registerCommands() {
     if (GameRuleRegistry.hasRegistration("MultiSleepPercent")) {
@@ -113,8 +126,15 @@ public class MultiSleep implements ModInitializer {
       }
       return ActionResult.PASS;
     });
+    ClientPlayConnectionEvents.JOIN.register((handler, server, client) -> {
+      wants_phantoms.put(client.player, false);
+    });
+    ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+      wants_phantoms.remove(client.player);
+    });
   }
 
+  public HashMap<PlayerEntity, Boolean> wants_phantoms;
   public HashMap<UUID, AFKPlayer> afkPlayers;
   public Set<PlayerEntity> votedYes;
   public Set<PlayerEntity> votedNo;
@@ -177,7 +197,17 @@ public class MultiSleep implements ModInitializer {
 
   public void sleep() {
     sleepNow = true;
+    for (AbstractClientPlayerEntity p : getPlayers()) {
+      if (!wants_phantoms.get(p)) {
+        p.resetStat(Stats.CUSTOM.getOrCreateStat(Stats.TIME_SINCE_REST));
+      }
+    }
     stopVoting();
+  }
+
+  public void setPhantom(PlayerEntity player) {
+    boolean oldValue = wants_phantoms.get(player);
+    wants_phantoms.replace(player, oldValue, !oldValue);
   }
 
   public static void log(Level level, String message) {

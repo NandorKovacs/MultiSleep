@@ -20,5 +20,4 @@ public interface PlayerTickCallback {
       });
 
   ActionResult interact(PlayerEntity player);
-
 }

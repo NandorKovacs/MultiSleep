@@ -3,7 +3,7 @@
   "package": "net.roaringmind.multisleep.mixin",
   "compatibilityLevel": "JAVA_8",
   "mixins": [],
-  "client": ["PlayerSleepMixin", "InventoryButtonMixin"],
+  "client": ["PlayerSleepMixin", "InventoryButtonMixin", "WorldSleepMixin", "PlayerTickMixin"],
   "server": [],
   "injectors": {
     "defaultRequire": 1

@@ -27,18 +27,8 @@ public abstract class InventoryButtonMixin extends AbstractInventoryScreen<Playe
     void addCustomButton(final CallbackInfo info) {
         System.out.println("XXXXXX button width = " + this.width);
 
-        // this.addButton(new ButtonWidget(this.x + 104, this.height / 2 - 40, 20, 18,
-        // Text.of("hi"), (buttonWidget) -> {
-        // System.out.println("XXXXX click2");
-        // }));
-
         myButton = new TexturedButtonWidget(this.x + 125, this.height / 2 - 22, 20, 18, 0, 0, 19,
                 RECIPE_BUTTON_TEXTURE2, (buttonWidget) -> {
-                    //System.out.println("XXXXX click");
-
-                    //MinecraftClient mc = MinecraftClient.getInstance();
-                    //mc.openScreen(new CottonClientScreen(new SleepGUI()));
-
                     ActionResult result = ButtonClickCallback.EVENT.invoker().interact(this.client.player);
 
                     if (result == ActionResult.SUCCESS) {
@@ -52,5 +42,4 @@ public abstract class InventoryButtonMixin extends AbstractInventoryScreen<Playe
     void onRender(final MatrixStack matrices, int mouseX, int mouseY, float delta, final CallbackInfo info) {
         myButton.setPos(this.x + 125, this.height / 2 - 22);
     }
-
 }
