@@ -12,7 +12,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import io.github.cottonmc.cotton.gui.client.CottonClientScreen;
-import net.fabricmc.api.ModInitializer;
+import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.gamerule.v1.GameRuleFactory;
@@ -34,7 +34,7 @@ import net.roaringmind.multisleep.callbacks.PlayerSleepCallback;
 import net.roaringmind.multisleep.callbacks.PlayerTickCallback;
 import net.roaringmind.multisleep.callbacks.WorldSleepCallback;
 
-public class MultiSleep implements ModInitializer {
+public class MultiSleepClient implements ClientModInitializer {
 
   public static Logger LOGGER = LogManager.getLogger();
 
@@ -42,7 +42,7 @@ public class MultiSleep implements ModInitializer {
   public static final String MOD_NAME = "Multiplayer Sleep";
   public static final Identifier TIME_SINCE_SLEPT_IN_BED = new Identifier("multisleep", "time_since_last_slept_in_bed");
   @Override
-  public void onInitialize() {
+  public void onInitializeClient() {
     log(Level.INFO, "Initializing");
 
     registerStats();
@@ -82,7 +82,7 @@ public class MultiSleep implements ModInitializer {
       dispatcher.register(literal("vote").executes(context -> {
         MinecraftClient mc = MinecraftClient.getInstance();
 
-        //mc.openScreen(new CottonClientScreen(new SleepGUI(this, wants_phantoms.get(mc.player))));
+        mc.openScreen(new CottonClientScreen(new SleepGUI(this, wants_phantoms.get(mc.player))));
 
         return 1;
       }));
@@ -115,7 +115,7 @@ public class MultiSleep implements ModInitializer {
     ButtonClickCallback.EVENT.register((player) -> {
       MinecraftClient mc = MinecraftClient.getInstance();
 
-      //mc.openScreen(new CottonClientScreen(new SleepGUI(this, wants_phantoms.get(mc.player))));
+      mc.openScreen(new CottonClientScreen(new SleepGUI(this, wants_phantoms.get(mc.player))));
       return ActionResult.SUCCESS;
     });
     PlayerTickCallback.EVENT.register((player) -> {

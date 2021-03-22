@@ -4,10 +4,10 @@ import net.minecraft.entity.player.PlayerEntity;
 
 public class ButtonClick implements Runnable {
   public ClickTypes vote;
-  public MultiSleep instance;
+  public MultiSleepClient instance;
   public PlayerEntity player;
 
-  ButtonClick(ClickTypes vote, PlayerEntity player, MultiSleep instance) {
+  ButtonClick(ClickTypes vote, PlayerEntity player, MultiSleepClient instance) {
     this.vote = vote;
     this.instance = instance;
     this.player = player;

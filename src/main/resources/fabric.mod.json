@@ -13,10 +13,8 @@
   "icon": "assets/multisleep/icon.png",
   "environment": "*",
   "entrypoints": {
-    "main": [
-      "net.roaringmind.multisleep.MultiSleep"
-    ],
-    "client": [],
+    "main": [],
+    "client": ["net.roaringmind.multisleep.MultiSleepClient"],
     "server": []
   },
   "mixins": [

@@ -8,7 +8,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.LiteralText;
 
 public class SleepGUI extends LightweightGuiDescription {
-  public SleepGUI(MultiSleep instance, boolean phantomState) {
+  public SleepGUI(MultiSleepClient instance, boolean phantomState) {
     WGridPanel root = new WGridPanel();
     // root.setSize(128, 10);
     setRootPanel(root);
