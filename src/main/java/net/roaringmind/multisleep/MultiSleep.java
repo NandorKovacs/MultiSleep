@@ -82,7 +82,7 @@ public class MultiSleep implements ModInitializer {
       dispatcher.register(literal("vote").executes(context -> {
         MinecraftClient mc = MinecraftClient.getInstance();
 
-        mc.openScreen(new CottonClientScreen(new SleepGUI(this)));
+        mc.openScreen(new CottonClientScreen(new SleepGUI(this, wants_phantoms.get(mc.player))));
 
         return 1;
       }));
@@ -115,14 +115,14 @@ public class MultiSleep implements ModInitializer {
     ButtonClickCallback.EVENT.register((player) -> {
       MinecraftClient mc = MinecraftClient.getInstance();
 
-      mc.openScreen(new CottonClientScreen(new SleepGUI(this)));
+      mc.openScreen(new CottonClientScreen(new SleepGUI(this, wants_phantoms.get(mc.player))));
       return ActionResult.SUCCESS;
     });
     PlayerTickCallback.EVENT.register((player) -> {
       UUID name = player.getUuid();
       if (afkPlayers.containsKey(name) && !afkPlayers.get(name).check()) {
         afkPlayers.remove(name);
-        return ActionResult.SUCCESS;
+        return ActionResult.FAIL;
       }
       return ActionResult.PASS;
     });
@@ -134,8 +134,8 @@ public class MultiSleep implements ModInitializer {
     });
   }
 
-  public HashMap<PlayerEntity, Boolean> wants_phantoms;
-  public HashMap<UUID, AFKPlayer> afkPlayers;
+  public HashMap<PlayerEntity, Boolean> wants_phantoms = new HashMap<>();
+  public HashMap<UUID, AFKPlayer> afkPlayers = new HashMap<>();
   public Set<PlayerEntity> votedYes;
   public Set<PlayerEntity> votedNo;
   public boolean voting = false;
@@ -203,11 +203,6 @@ public class MultiSleep implements ModInitializer {
       }
     }
     stopVoting();
-  }
-
-  public void setPhantom(PlayerEntity player) {
-    boolean oldValue = wants_phantoms.get(player);
-    wants_phantoms.replace(player, oldValue, !oldValue);
   }
 
   public static void log(Level level, String message) {
