@@ -11,15 +11,21 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import io.github.cottonmc.cotton.gui.client.CottonClientScreen;
+import io.netty.buffer.ByteBuf;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.gamerule.v1.GameRuleFactory;
 import net.fabricmc.fabric.api.gamerule.v1.GameRuleRegistry;
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
+import net.minecraft.client.realms.dto.RealmsServer.WorldType;
+import net.minecraft.client.render.SkyProperties.Overworld;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.network.PacketByteBuf;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.stat.StatFormatter;
 import net.minecraft.stat.Stats;
 import net.minecraft.text.Text;
@@ -29,9 +35,12 @@ import net.minecraft.util.registry.Registry;
 import net.minecraft.world.GameRules.Category;
 import net.minecraft.world.GameRules.IntRule;
 import net.minecraft.world.GameRules.Key;
+import net.minecraft.world.dimension.DimensionType;
 import net.roaringmind.multisleep.callbacks.ButtonClickCallback;
+import net.roaringmind.multisleep.callbacks.PhantomClickCallback;
 import net.roaringmind.multisleep.callbacks.PlayerSleepCallback;
 import net.roaringmind.multisleep.callbacks.PlayerTickCallback;
+import net.roaringmind.multisleep.callbacks.VoteClickCallback;
 import net.roaringmind.multisleep.callbacks.WorldSleepCallback;
 
 public class MultiSleep implements ModInitializer {
@@ -41,6 +50,7 @@ public class MultiSleep implements ModInitializer {
   public static final String MOD_ID = "multisleep";
   public static final String MOD_NAME = "Multiplayer Sleep";
   public static final Identifier TIME_SINCE_SLEPT_IN_BED = new Identifier("multisleep", "time_since_last_slept_in_bed");
+
   @Override
   public void onInitialize() {
     log(Level.INFO, "Initializing");
@@ -82,7 +92,12 @@ public class MultiSleep implements ModInitializer {
       dispatcher.register(literal("vote").executes(context -> {
         MinecraftClient mc = MinecraftClient.getInstance();
 
-        //mc.openScreen(new CottonClientScreen(new SleepGUI(this, wants_phantoms.get(mc.player))));
+        PacketByteBuf wantsPhantom = PacketByteBufs.create();
+        wantsPhantom.writeBoolean(wants_phantoms.get(mc.player));
+        ServerPlayNetworking.send(context.getSource().getPlayer(), MultiSleepClient.OPEN_GUI_PACKET_ID, wantsPhantom);
+
+        // mc.openScreen(new CottonClientScreen(new SleepGUI(this,
+        // wants_phantoms.get(mc.player))));
 
         return 1;
       }));
@@ -97,6 +112,25 @@ public class MultiSleep implements ModInitializer {
   }
 
   void registerEvents() {
+    VoteClickCallback.EVENT.register((player, type) -> {
+      if (type == ClickTypes.YES && voting) {
+        vote(true, player);
+      }
+      if (type == ClickTypes.NO && voting) {
+        vote(false, player);
+      }
+      if (type == ClickTypes.AFK) {
+        AFKPlayer afkPlayer = new AFKPlayer(player);
+        if (!afkPlayers.containsKey(player.getUuid())) {
+          afkPlayers.put(player.getUuid(), afkPlayer);
+        }
+      }
+    });
+
+    PhantomClickCallback.EVENT.register((player) -> {
+      wants_phantoms.put(player, !wants_phantoms.get(player));
+    });
+
     PlayerSleepCallback.EVENT.register((player, pos) -> {
       if (voting) {
         vote(true, player);
@@ -105,6 +139,7 @@ public class MultiSleep implements ModInitializer {
       startVoting(player);
       return ActionResult.PASS;
     });
+
     WorldSleepCallback.EVENT.register(() -> {
       if (sleepNow) {
         sleepNow = false;
@@ -112,12 +147,23 @@ public class MultiSleep implements ModInitializer {
       }
       return ActionResult.PASS;
     });
+
     ButtonClickCallback.EVENT.register((player) -> {
       MinecraftClient mc = MinecraftClient.getInstance();
 
-      //mc.openScreen(new CottonClientScreen(new SleepGUI(this, wants_phantoms.get(mc.player))));
+      if (!mc.player.world.getDimension().isBedWorking()) {
+        return ActionResult.FAIL;
+      }
+
+      UUID uuid = mc.player.getUuid();
+
+      PacketByteBuf wantsPhantom = PacketByteBufs.create();
+      wantsPhantom.writeBoolean(wants_phantoms.get(mc.player));
+      ServerPlayNetworking.send((ServerPlayerEntity) mc.getServer().getOverworld().getPlayerByUuid(uuid), MultiSleepClient.OPEN_GUI_PACKET_ID, wantsPhantom);
+
       return ActionResult.SUCCESS;
     });
+
     PlayerTickCallback.EVENT.register((player) -> {
       UUID name = player.getUuid();
       if (afkPlayers.containsKey(name) && !afkPlayers.get(name).check()) {
@@ -126,6 +172,7 @@ public class MultiSleep implements ModInitializer {
       }
       return ActionResult.PASS;
     });
+
     ClientPlayConnectionEvents.JOIN.register((handler, server, client) -> {
       wants_phantoms.put(client.player, false);
     });

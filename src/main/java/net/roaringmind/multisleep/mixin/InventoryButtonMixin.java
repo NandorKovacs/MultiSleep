@@ -5,6 +5,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ingame.AbstractInventoryScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.client.gui.widget.TexturedButtonWidget;
@@ -29,7 +30,8 @@ public abstract class InventoryButtonMixin extends AbstractInventoryScreen<Playe
 
         myButton = new TexturedButtonWidget(this.x + 125, this.height / 2 - 22, 20, 18, 0, 0, 19,
                 RECIPE_BUTTON_TEXTURE2, (buttonWidget) -> {
-                    ActionResult result = ButtonClickCallback.EVENT.invoker().interact(this.client.player);
+
+                  ActionResult result = ButtonClickCallback.EVENT.invoker().interact(this.client.player);
 
                     if (result == ActionResult.SUCCESS) {
                       System.out.println("Clicked the Button");

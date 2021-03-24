@@ -9,7 +9,7 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
-import net.roaringmind.multisleep.MultiSleepClient;
+import net.roaringmind.multisleep.MultiSleep;
 import net.roaringmind.multisleep.callbacks.PlayerTickCallback;
 
 @Mixin(PlayerEntity.class)
@@ -27,6 +27,6 @@ public abstract class PlayerTickMixin extends LivingEntity {
       self.sendMessage(Text.of("No longer AFK"), true);
     }
 
-    self.incrementStat(MultiSleepClient.TIME_SINCE_SLEPT_IN_BED);
+    self.incrementStat(MultiSleep.TIME_SINCE_SLEPT_IN_BED);
   }
 }

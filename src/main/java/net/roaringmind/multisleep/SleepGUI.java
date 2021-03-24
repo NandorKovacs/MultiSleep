@@ -6,9 +6,10 @@ import io.github.cottonmc.cotton.gui.widget.WGridPanel;
 import io.github.cottonmc.cotton.gui.widget.WToggleButton;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.LiteralText;
+import net.roaringmind.multisleep.callbacks.PhantomClickCallback;
 
 public class SleepGUI extends LightweightGuiDescription {
-  public SleepGUI(MultiSleepClient instance, boolean phantomState) {
+  public SleepGUI(boolean phantomState) {
     WGridPanel root = new WGridPanel();
     // root.setSize(128, 10);
     setRootPanel(root);
@@ -20,9 +21,9 @@ public class SleepGUI extends LightweightGuiDescription {
 
     MinecraftClient mc = MinecraftClient.getInstance();
 
-    ButtonClick clickYes = new ButtonClick(ClickTypes.YES, mc.player, instance);
-    ButtonClick clickNo = new ButtonClick(ClickTypes.NO, mc.player, instance);
-    ButtonClick clickAFK = new ButtonClick(ClickTypes.AFK, mc.player, instance);
+    ButtonClick clickYes = new ButtonClick(ClickTypes.YES, mc.player);
+    ButtonClick clickNo = new ButtonClick(ClickTypes.NO, mc.player);
+    ButtonClick clickAFK = new ButtonClick(ClickTypes.AFK, mc.player);
 
     yes.setOnClick(clickYes);
     no.setOnClick(clickNo);
@@ -30,7 +31,7 @@ public class SleepGUI extends LightweightGuiDescription {
 
     phantoms.setToggle(phantomState);
     phantoms.setOnToggle(on -> {
-      instance.wants_phantoms.put(mc.player, on);
+      PhantomClickCallback.EVENT.invoker().interact(mc.player);
     });
 
     root.add(afk, 0, 5, 4, 1);
