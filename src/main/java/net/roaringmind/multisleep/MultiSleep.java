@@ -29,6 +29,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.world.GameRules.BooleanRule;
 import net.minecraft.world.GameRules.Category;
 import net.minecraft.world.GameRules.IntRule;
 import net.minecraft.world.GameRules.Key;
@@ -48,9 +49,34 @@ public class MultiSleep implements ModInitializer {
   public static final Identifier TIME_SINCE_SLEPT_IN_BED = new Identifier("multisleep", "time_since_last_slept_in_bed");
   public static final Identifier CLIENT_CONNECTION_PACKET = new Identifier("multisleep", "client_connection_packet");
 
+  private Key<IntRule> registerIntGamerule(String name, int min, int max, int startValue) {
+    if (GameRuleRegistry.hasRegistration(name)) {
+      log(Level.FATAL, "Can't register gamerule, gamerule with the id \"" + name
+          + "\" is already existing. Resolve the issue, or there may be confilicts with other mods");
+      return null;
+    }
+    return GameRuleRegistry.register(name, Category.MISC, GameRuleFactory.createIntRule(startValue, min, max));
+  }
+
+  private Key<BooleanRule> registerBooleanGamerule(String name, boolean startValue) {
+    if (GameRuleRegistry.hasRegistration(name)) {
+      log(Level.FATAL, "Can't register gamerule, gamerule with the id \"" + name
+          + "\" is already existing. Resolve the issue, or there may be confilicts with other mods");
+      return null;
+    }
+    return GameRuleRegistry.register(name, Category.MISC, GameRuleFactory.createBooleanRule(startValue));
+  }
+
+  Key<IntRule> multisleeppercent_key;
+  Key<IntRule> timer_length_key;
+
+
   @Override
   public void onInitialize() {
     log(Level.INFO, "Initializing");
+
+    multisleeppercent_key = registerIntGamerule("sleepPercent-multisleep", 0, 100, 100);
+    timer_length_key = registerIntGamerule("timerLength-multisleep", 0, 600, 30);
 
     registerStats();
 
@@ -70,21 +96,12 @@ public class MultiSleep implements ModInitializer {
     }
   }
 
-  Key<IntRule> multisleeppercent_key;
-
   void registerStats() {
     Registry.register(Registry.CUSTOM_STAT, "time_since_last_slept_in_bed", TIME_SINCE_SLEPT_IN_BED);
     Stats.CUSTOM.getOrCreateStat(TIME_SINCE_SLEPT_IN_BED, StatFormatter.TIME);
   }
 
   void registerCommands() {
-    if (GameRuleRegistry.hasRegistration("MultiSleepPercent")) {
-      log(Level.WARN,
-          "Can't register gamerule, other gamerule with the same name is already existing. please remove incompatible mods to be able to use the gamerule \"MultiSleepPercent\"");
-    } else {
-      multisleeppercent_key = GameRuleRegistry.register("MultiSleepPercent", Category.MISC,
-          GameRuleFactory.createIntRule(0, 0, 100));
-    }
     CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> {
       dispatcher.register(literal("vote").executes(context -> {
         MinecraftClient mc = MinecraftClient.getInstance();
