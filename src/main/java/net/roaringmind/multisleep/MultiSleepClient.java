@@ -13,6 +13,7 @@ import net.minecraft.util.Identifier;
 public class MultiSleepClient implements ClientModInitializer {
 
   public static final Identifier OPEN_GUI_PACKET_ID = new Identifier("multisleep", "open_gui");
+  public static final Identifier PROGRESSION_BAR_PACKET_ID = new Identifier("multisleep", "progression_bar");
 
   @Override
   public void onInitializeClient() {
@@ -22,6 +23,7 @@ public class MultiSleepClient implements ClientModInitializer {
   void registerEvents() {
     ClientPlayConnectionEvents.INIT.register((handler, client) -> {
       ClientPlayNetworking.registerReceiver(OPEN_GUI_PACKET_ID, MultiSleepClient::openGUI);
+      ClientPlayNetworking.registerReceiver(PROGRESSION_BAR_PACKET_ID, MultiSleepClient::renderProgressionBar);
     });
   }
 
@@ -29,4 +31,7 @@ public class MultiSleepClient implements ClientModInitializer {
     mc.openScreen(new CottonClientScreen(new SleepGUI(packetByteBuf.readBoolean())));
   }
 
+  public static void renderProgressionBar(MinecraftClient mc, ClientPlayNetworkHandler handler, PacketByteBuf packetByteBuf, PacketSender sender) {
+    
+  }
 }

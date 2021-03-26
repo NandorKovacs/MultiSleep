@@ -70,7 +70,6 @@ public class MultiSleep implements ModInitializer {
   Key<IntRule> multisleeppercent_key;
   Key<IntRule> timer_length_key;
 
-
   @Override
   public void onInitialize() {
     log(Level.INFO, "Initializing");
@@ -127,10 +126,10 @@ public class MultiSleep implements ModInitializer {
 
   void registerEvents() {
     VoteClickCallback.EVENT.register((player, type) -> {
-      if (type == ClickTypes.YES && voting) {
+      if (type == ClickTypes.YES && voting > 0) {
         vote(true, player);
       }
-      if (type == ClickTypes.NO && voting) {
+      if (type == ClickTypes.NO && voting > 0) {
         vote(false, player);
       }
       if (type == ClickTypes.AFK) {
@@ -146,7 +145,7 @@ public class MultiSleep implements ModInitializer {
     });
 
     PlayerSleepCallback.EVENT.register((player, pos) -> {
-      if (voting) {
+      if (voting > 0) {
         vote(true, player);
         return ActionResult.PASS;
       }
@@ -187,6 +186,10 @@ public class MultiSleep implements ModInitializer {
         afkPlayers.remove(name);
         return ActionResult.FAIL;
       }
+
+      if (voting > 0) {
+        renderProgressionBar(player);
+      }
       return ActionResult.PASS;
     });
 
@@ -203,7 +206,16 @@ public class MultiSleep implements ModInitializer {
   public HashMap<UUID, AFKPlayer> afkPlayers = new HashMap<>();
   public Set<PlayerEntity> votedYes;
   public Set<PlayerEntity> votedNo;
-  public boolean voting = false;
+  public int voting = 0;
+
+  public void renderProgressionBar(PlayerEntity p) {
+    ServerPlayerEntity player = MinecraftClient.getInstance().getServer().getPlayerManager().getPlayer(p.getUuid());
+    
+    PacketByteBuf progress = PacketByteBufs.create();
+    progress.writeInt(MinecraftClient.getInstance().getServer().getGameRules().getInt(timer_length_key));
+
+    ServerPlayNetworking.send(player, MultiSleepClient.PROGRESSION_BAR_PACKET_ID, progress);
+  }
 
   public void startVoting(PlayerEntity initiator) {
     if (getPlayers().size() == 1) {
@@ -212,7 +224,7 @@ public class MultiSleep implements ModInitializer {
     }
 
     broadcast("Voting for Sleep, Voting started by " + initiator.getName(), true);
-    voting = true;
+    voting = MinecraftClient.getInstance().getServer().getGameRules().getInt(timer_length_key);
     for (AbstractClientPlayerEntity player : getPlayers()) {
       if (afkPlayers.containsKey(player.getUuid())) {
         votedYes.add(player);
@@ -221,7 +233,7 @@ public class MultiSleep implements ModInitializer {
   }
 
   public void stopVoting() {
-    voting = false;
+    voting = 0;
     votedYes.clear();
     votedNo.clear();
   }
