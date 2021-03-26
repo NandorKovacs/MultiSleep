@@ -11,20 +11,20 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import io.netty.buffer.ByteBuf;
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.gamerule.v1.GameRuleFactory;
 import net.fabricmc.fabric.api.gamerule.v1.GameRuleRegistry;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
+import net.fabricmc.fabric.api.networking.v1.PacketSender;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
-import net.minecraft.client.realms.dto.RealmsServer.WorldType;
-import net.minecraft.client.render.SkyProperties.Overworld;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.PacketByteBuf;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.stat.StatFormatter;
 import net.minecraft.stat.Stats;
@@ -35,8 +35,8 @@ import net.minecraft.util.registry.Registry;
 import net.minecraft.world.GameRules.Category;
 import net.minecraft.world.GameRules.IntRule;
 import net.minecraft.world.GameRules.Key;
-import net.minecraft.world.dimension.DimensionType;
 import net.roaringmind.multisleep.callbacks.ButtonClickCallback;
+import net.roaringmind.multisleep.callbacks.ConnectionEventCallback;
 import net.roaringmind.multisleep.callbacks.PhantomClickCallback;
 import net.roaringmind.multisleep.callbacks.PlayerSleepCallback;
 import net.roaringmind.multisleep.callbacks.PlayerTickCallback;
@@ -50,6 +50,7 @@ public class MultiSleep implements ModInitializer {
   public static final String MOD_ID = "multisleep";
   public static final String MOD_NAME = "Multiplayer Sleep";
   public static final Identifier TIME_SINCE_SLEPT_IN_BED = new Identifier("multisleep", "time_since_last_slept_in_bed");
+  public static final Identifier CLIENT_CONNECTION_PACKET = new Identifier("multisleep", "client_connection_packet");
 
   @Override
   public void onInitialize() {
@@ -60,6 +61,19 @@ public class MultiSleep implements ModInitializer {
     registerEvents();
 
     registerCommands();
+
+    registerNetworking();
+  }
+
+  void registerNetworking() {
+    ServerPlayConnectionEvents.INIT.register((handler, server) -> {
+      ServerPlayNetworking.registerReceiver(handler, CLIENT_CONNECTION_PACKET, MultiSleep::connectionEventHandler);
+    });
+  }
+
+  public static void connectionEventHandler(MinecraftServer server, ServerPlayerEntity player, ServerPlayNetworkHandler handler,
+      PacketByteBuf packetByteBuf, PacketSender sender) {
+        ConnectionEventCallback.EVENT.invoker().interact(packetByteBuf.readBoolean(), player);
   }
 
   public List<AbstractClientPlayerEntity> getPlayers() {
@@ -159,7 +173,8 @@ public class MultiSleep implements ModInitializer {
 
       PacketByteBuf wantsPhantom = PacketByteBufs.create();
       wantsPhantom.writeBoolean(wants_phantoms.get(mc.player));
-      ServerPlayNetworking.send((ServerPlayerEntity) mc.getServer().getOverworld().getPlayerByUuid(uuid), MultiSleepClient.OPEN_GUI_PACKET_ID, wantsPhantom);
+      ServerPlayNetworking.send((ServerPlayerEntity) mc.getServer().getOverworld().getPlayerByUuid(uuid),
+          MultiSleepClient.OPEN_GUI_PACKET_ID, wantsPhantom);
 
       return ActionResult.SUCCESS;
     });
@@ -172,12 +187,13 @@ public class MultiSleep implements ModInitializer {
       }
       return ActionResult.PASS;
     });
-
-    ClientPlayConnectionEvents.JOIN.register((handler, server, client) -> {
-      wants_phantoms.put(client.player, false);
-    });
-    ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
-      wants_phantoms.remove(client.player);
+  
+    ConnectionEventCallback.EVENT.register((isJoin, player) -> {
+      if (isJoin) {
+        wants_phantoms.put(player, true);
+      } else {
+        wants_phantoms.remove(player);
+      }
     });
   }
 
