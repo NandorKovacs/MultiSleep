@@ -16,15 +16,12 @@ import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.gamerule.v1.GameRuleFactory;
 import net.fabricmc.fabric.api.gamerule.v1.GameRuleRegistry;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.PacketByteBuf;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.stat.StatFormatter;
 import net.minecraft.stat.Stats;
@@ -36,7 +33,6 @@ import net.minecraft.world.GameRules.Category;
 import net.minecraft.world.GameRules.IntRule;
 import net.minecraft.world.GameRules.Key;
 import net.roaringmind.multisleep.callbacks.ButtonClickCallback;
-import net.roaringmind.multisleep.callbacks.ConnectionEventCallback;
 import net.roaringmind.multisleep.callbacks.PhantomClickCallback;
 import net.roaringmind.multisleep.callbacks.PlayerSleepCallback;
 import net.roaringmind.multisleep.callbacks.PlayerTickCallback;
@@ -61,19 +57,6 @@ public class MultiSleep implements ModInitializer {
     registerEvents();
 
     registerCommands();
-
-    registerNetworking();
-  }
-
-  void registerNetworking() {
-    ServerPlayConnectionEvents.INIT.register((handler, server) -> {
-      ServerPlayNetworking.registerReceiver(handler, CLIENT_CONNECTION_PACKET, MultiSleep::connectionEventHandler);
-    });
-  }
-
-  public static void connectionEventHandler(MinecraftServer server, ServerPlayerEntity player, ServerPlayNetworkHandler handler,
-      PacketByteBuf packetByteBuf, PacketSender sender) {
-        ConnectionEventCallback.EVENT.invoker().interact(packetByteBuf.readBoolean(), player);
   }
 
   public List<AbstractClientPlayerEntity> getPlayers() {
@@ -173,8 +156,10 @@ public class MultiSleep implements ModInitializer {
 
       PacketByteBuf wantsPhantom = PacketByteBufs.create();
       wantsPhantom.writeBoolean(wants_phantoms.get(mc.player));
-      ServerPlayNetworking.send((ServerPlayerEntity) mc.getServer().getOverworld().getPlayerByUuid(uuid),
-          MultiSleepClient.OPEN_GUI_PACKET_ID, wantsPhantom);
+
+      ServerPlayerEntity entityPlayer = mc.getServer().getPlayerManager().getPlayer(uuid);
+
+      ServerPlayNetworking.send(entityPlayer, MultiSleepClient.OPEN_GUI_PACKET_ID, wantsPhantom);
 
       return ActionResult.SUCCESS;
     });
@@ -187,13 +172,13 @@ public class MultiSleep implements ModInitializer {
       }
       return ActionResult.PASS;
     });
-  
-    ConnectionEventCallback.EVENT.register((isJoin, player) -> {
-      if (isJoin) {
-        wants_phantoms.put(player, true);
-      } else {
-        wants_phantoms.remove(player);
-      }
+
+    ServerPlayConnectionEvents.JOIN.register((handler, server, sender) -> {
+      wants_phantoms.put(handler.player, false);
+    });
+
+    ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
+      wants_phantoms.remove(handler.player);
     });
   }
 
