@@ -16,6 +16,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.ActionResult;
 import net.roaringmind.multisleep.callbacks.TrySleepCallback;
+import net.roaringmind.multisleep.gui.ClickTypes;
 
 public class MultiSleep implements ModInitializer {
 
@@ -84,5 +85,9 @@ public class MultiSleep implements ModInitializer {
 
   public static void log(Level level, String message) {
     LOGGER.log(level, "[" + MOD_NAME + "] " + message);
+  }
+
+  public static void playerClick(PlayerEntity player, ClickTypes vote) {
+    
   }
 }
