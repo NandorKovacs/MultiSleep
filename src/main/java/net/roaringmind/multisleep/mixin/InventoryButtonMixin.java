@@ -28,7 +28,7 @@ public abstract class InventoryButtonMixin extends AbstractInventoryScreen<Playe
     myButton = new TexturedButtonWidget(this.x + 125, this.height / 2 - 22, 20, 18, 0, 0, 19, RECIPE_BUTTON_TEXTURE2,
         (buttonWidget) -> {
           // TODO: set the boolean
-          this.client.openScreen(new CottonClientScreen(new SleepGUI(false)));
+          this.client.openScreen(new CottonClientScreen(new SleepGUI()));
         });
     this.addButton(myButton);
   }
