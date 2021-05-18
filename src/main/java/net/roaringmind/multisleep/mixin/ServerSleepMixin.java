@@ -41,7 +41,7 @@ public abstract class ServerSleepMixin extends World {
 
   @Inject(method = "tick", at = @At(value = "RETURN", args = { "log = true" }))
   public void sleepInject(BooleanSupplier shouldKeepTicking, CallbackInfo cir) {
-    if (!MultiSleep.shoudlSleepNow) {
+    if (!MultiSleep.shouldSleepNow || this.isDay()) {
       return;
     }
 
@@ -56,6 +56,6 @@ public abstract class ServerSleepMixin extends World {
     if (this.getGameRules().getBoolean(GameRules.DO_WEATHER_CYCLE)) {
       this.resetWeather();
     }
-    MultiSleep.shoudlSleepNow = false;
+    MultiSleep.shouldSleepNow = false;
   }
 }
