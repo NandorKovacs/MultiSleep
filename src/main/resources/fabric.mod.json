@@ -14,7 +14,7 @@
   "environment": "*",
   "entrypoints": {
     "main": ["net.roaringmind.multisleep.MultiSleep"],
-    "client": ["net.roaringmind.multisleep.MultiSleepClient"],
+    "client": [],
     "server": []
   },
   "mixins": [
