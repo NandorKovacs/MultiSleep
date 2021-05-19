@@ -13,6 +13,7 @@ public class ButtonClick implements Runnable {
   }
 
   public void run() {
+    System.out.println("im here");
     MultiSleep.playerClick(player, vote);
   }
 }

