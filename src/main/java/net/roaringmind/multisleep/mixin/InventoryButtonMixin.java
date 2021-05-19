@@ -26,10 +26,7 @@ public abstract class InventoryButtonMixin extends AbstractInventoryScreen<Playe
   @Inject(method = "init", at = @At(value = "INVOKE_ASSIGN", target = "Lnet/minecraft/client/gui/screen/ingame/InventoryScreen;addButton(Lnet/minecraft/client/gui/widget/AbstractButtonWidget;)Lnet/minecraft/client/gui/widget/AbstractButtonWidget;"))
   void addCustomButton(final CallbackInfo info) {
     myButton = new TexturedButtonWidget(this.x + 125, this.height / 2 - 22, 20, 18, 0, 0, 19, RECIPE_BUTTON_TEXTURE2,
-        (buttonWidget) -> {
-          // TODO: set the boolean
-          this.client.openScreen(new CottonClientScreen(new SleepGUI()));
-        });
+        buttonWidget -> this.client.openScreen(new CottonClientScreen(new SleepGUI())));
     this.addButton(myButton);
   }
 

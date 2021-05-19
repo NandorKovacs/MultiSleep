@@ -30,7 +30,7 @@ public class ClientMultiSleep implements ClientModInitializer {
     });
   }
 
-  private void registerKeyBinds() {
+  private static void registerKeyBinds() {
     guiKeyBinding = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.multisleep.opengui", InputUtil.Type.KEYSYM,
         InputUtil.UNKNOWN_KEY.getCode(), "category.multisleep.keybinds"));
     voteYesKeyBinding = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.multisleep.voteyes",
