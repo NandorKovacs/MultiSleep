@@ -17,12 +17,14 @@ import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.gamerule.v1.GameRuleFactory;
 import net.fabricmc.fabric.api.gamerule.v1.GameRuleRegistry;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.stat.Stats;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.ActionResult;
+import net.minecraft.util.Identifier;
 import net.minecraft.world.GameRules.Category;
 import net.minecraft.world.GameRules.IntRule;
 import net.minecraft.world.GameRules.Key;
@@ -37,6 +39,7 @@ public class MultiSleep implements ModInitializer {
 
   public static final String MOD_ID = "multisleep";
   public static final String MOD_NAME = "Multiplayer Sleep";
+  public static final Identifier VOTE_PACKET_ID = new Identifier(MOD_ID, "vote_packet_id");
 
   @Override
   public void onInitialize() {
@@ -45,6 +48,41 @@ public class MultiSleep implements ModInitializer {
     registerCommands();
 
     registerEvents();
+
+    ServerPlayNetworking.registerGlobalReceiver(VOTE_PACKET_ID, (server, player, handler, buf, responseSender) -> {
+      ClickTypes clickType = ClickTypes.fromInt(buf.readInt());
+      
+      if (clickType == null) {
+        System.out.println("something went wrong");
+      }
+      
+      switch (clickType) {
+        case YES: {
+          vote(player, true, false);
+          return;
+        }
+        case NO: {
+          vote(player, false, false);
+          return;
+        }
+        case PHANTOMYES: {
+          setPhantomPreferences(player.getUuid(), true);
+          return;
+        }
+        case PHANTOMNO: {
+          setPhantomPreferences(player.getUuid(), false);
+          return;
+        }
+        case PERMAYES: {
+          setPermaSleep(player.getUuid(), true);
+          return;
+        }
+        case PERMANO: {
+          setPermaSleep(player.getUuid(), false);
+          return;
+        }
+      }
+    });
   }
 
   private static Key<IntRule> registerIntGamerule(String name, int min, int max, int startValue) {
@@ -124,6 +162,7 @@ public class MultiSleep implements ModInitializer {
   }
 
   public static void vote(PlayerEntity player, boolean wantsSleep, boolean canStart) {
+    System.out.println("start of vote");
     if (!wantsSleep) {
       if (!isVoting) {
         return;
@@ -156,14 +195,15 @@ public class MultiSleep implements ModInitializer {
 
   private static boolean checkVotes(MinecraftServer server) {
     float requiredPercent = server.getGameRules().getInt(multiSleepPercent);
-    float percentNo = (((float)sleepingPlayers.size() + (float)permaSleepPlayers.size()) / (float)server.getCurrentPlayerCount()) * (float)100;
+    float percentNo = (((float) sleepingPlayers.size() + (float) permaSleepPlayers.size())
+        / (float) server.getCurrentPlayerCount()) * (float) 100;
     float percentYes = 100 - percentNo;
 
-    System.out.println(percentYes + "----" + percentNo + "----" + requiredPercent + "----" + server.getCurrentPlayerCount());
+    System.out
+        .println(percentYes + "----" + percentNo + "----" + requiredPercent + "----" + server.getCurrentPlayerCount());
     System.out.println("sleeping players: " + uuidSetToString(sleepingPlayers, server) + "\n" + "awake players: "
-          + uuidSetToString(awakePlayers, server) + "\n" + "permasleep players: "
-          + uuidSetToString(permaSleepPlayers, server) + "\n" + "initiator: " + initiator.getName().asString());
-
+        + uuidSetToString(awakePlayers, server) + "\n" + "permasleep players: "
+        + uuidSetToString(permaSleepPlayers, server) + "\n" + "initiator: " + initiator.getName().asString());
 
     if (percentYes >= requiredPercent) {
       sleep(server);
@@ -224,6 +264,10 @@ public class MultiSleep implements ModInitializer {
   }
 
   public static void setPhantomPreferences(UUID playerUUID, boolean on) {
+    if (wantsPhantoms.contains(playerUUID) == on) {
+      return;
+    }
+    
     if (on) {
       wantsPhantoms.add(playerUUID);
     } else {
@@ -232,6 +276,10 @@ public class MultiSleep implements ModInitializer {
   }
 
   public static void setPermaSleep(UUID playerUUID, boolean on) {
+    if (permaSleepPlayers.contains(playerUUID) == on) {
+      return;
+    }
+
     if (on) {
       permaSleepPlayers.add(playerUUID);
     } else {

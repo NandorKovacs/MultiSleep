@@ -1,10 +1,16 @@
 package net.roaringmind.multisleep.gui;
 
+import com.google.common.collect.Multiset;
+
 import io.github.cottonmc.cotton.gui.client.LightweightGuiDescription;
 import io.github.cottonmc.cotton.gui.widget.WButton;
 import io.github.cottonmc.cotton.gui.widget.WGridPanel;
 import io.github.cottonmc.cotton.gui.widget.WToggleButton;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
+import net.java.games.input.Component.Identifier.Button;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.network.PacketByteBuf;
 import net.minecraft.text.LiteralText;
 import net.roaringmind.multisleep.MultiSleep;
 
@@ -20,17 +26,44 @@ public class SleepGUI extends LightweightGuiDescription {
 
     MinecraftClient mc = MinecraftClient.getInstance();
 
-    ButtonClick clickYes = new ButtonClick(ClickTypes.YES, mc.player);
-    ButtonClick clickNo = new ButtonClick(ClickTypes.NO, mc.player);
-
-    yes.setOnClick(clickYes);
-    no.setOnClick(clickNo);
+    yes.setOnClick(() -> {
+      System.out.println("im here");
+      PacketByteBuf pckt = PacketByteBufs.create();
+      pckt.writeInt(ClickTypes.YES.toInt());
+      ClientPlayNetworking.send(MultiSleep.VOTE_PACKET_ID, pckt);
+    });
+    no.setOnClick(() -> {
+      System.out.println("im here");
+      PacketByteBuf pckt = PacketByteBufs.create();
+      pckt.writeInt(ClickTypes.NO.toInt());
+      ClientPlayNetworking.send(MultiSleep.VOTE_PACKET_ID, pckt);
+    });
 
     phantoms.setToggle(MultiSleep.wantsPhantoms.contains(mc.player.getUuid()));
-    phantoms.setOnToggle(on -> MultiSleep.setPhantomPreferences(mc.player.getUuid(), on));
+    phantoms.setOnToggle(on -> {
+      PacketByteBuf pckt = PacketByteBufs.create();
+      pckt.writeUuid(mc.player.getUuid());
+      if (on) {
+        pckt.writeInt(ClickTypes.PHANTOMYES.toInt());
+        ClientPlayNetworking.send(MultiSleep.VOTE_PACKET_ID, pckt);
+        return;
+      }
+      pckt.writeInt(ClickTypes.PHANTOMNO.toInt());
+      ClientPlayNetworking.send(MultiSleep.VOTE_PACKET_ID, pckt);
+    });
 
     permaSleep.setToggle(MultiSleep.permaSleepPlayers.contains(mc.player.getUuid()));
-    permaSleep.setOnToggle(on -> MultiSleep.setPermaSleep(mc.player.getUuid(), on));
+    permaSleep.setOnToggle(on -> {
+      PacketByteBuf pckt = PacketByteBufs.create();
+      pckt.writeUuid(mc.player.getUuid());
+      if (on) {
+        pckt.writeInt(ClickTypes.PERMAYES.toInt());
+        ClientPlayNetworking.send(MultiSleep.VOTE_PACKET_ID, pckt);
+        return;
+      }
+      pckt.writeInt(ClickTypes.PERMANO.toInt());
+      ClientPlayNetworking.send(MultiSleep.VOTE_PACKET_ID, pckt);
+    });
 
     root.add(permaSleep, 0, 5, 4, 1);
     root.add(yes, 0, 3, 4, 1);
@@ -40,3 +73,4 @@ public class SleepGUI extends LightweightGuiDescription {
     root.validate(this);
   }
 }
+;
