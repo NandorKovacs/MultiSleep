@@ -12,7 +12,7 @@ import net.minecraft.text.LiteralText;
 import net.roaringmind.multisleep.MultiSleep;
 
 public class SleepGUI extends LightweightGuiDescription {
-  public SleepGUI() {
+  public SleepGUI(boolean phantomSwitch, boolean permaSwitch) {
     WGridPanel root = new WGridPanel();
     setRootPanel(root);
 
@@ -36,7 +36,7 @@ public class SleepGUI extends LightweightGuiDescription {
       ClientPlayNetworking.send(MultiSleep.VOTE_PACKET_ID, pckt);
     });
 
-    phantoms.setToggle(MultiSleep.wantsPhantoms.contains(mc.player.getUuid()));
+    phantoms.setToggle(phantomSwitch);
     phantoms.setOnToggle(on -> {
       PacketByteBuf pckt = PacketByteBufs.create();
       if (on) {
@@ -48,7 +48,7 @@ public class SleepGUI extends LightweightGuiDescription {
       ClientPlayNetworking.send(MultiSleep.VOTE_PACKET_ID, pckt);
     });
 
-    permaSleep.setToggle(MultiSleep.permaSleepPlayers.contains(mc.player.getUuid()));
+    permaSleep.setToggle(permaSwitch);
     permaSleep.setOnToggle(on -> {
       PacketByteBuf pckt = PacketByteBufs.create();
       if (on) {

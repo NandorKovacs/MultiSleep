@@ -5,14 +5,15 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import io.github.cottonmc.cotton.gui.client.CottonClientScreen;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.minecraft.client.gui.screen.ingame.AbstractInventoryScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.client.gui.widget.TexturedButtonWidget;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.screen.PlayerScreenHandler;
 import net.minecraft.util.Identifier;
-import net.roaringmind.multisleep.gui.SleepGUI;
+import net.roaringmind.multisleep.MultiSleep;
 
 @Mixin(InventoryScreen.class)
 public abstract class InventoryButtonMixin extends AbstractInventoryScreen<PlayerScreenHandler> {
@@ -26,7 +27,9 @@ public abstract class InventoryButtonMixin extends AbstractInventoryScreen<Playe
   @Inject(method = "init", at = @At(value = "INVOKE_ASSIGN", target = "Lnet/minecraft/client/gui/screen/ingame/InventoryScreen;addButton(Lnet/minecraft/client/gui/widget/AbstractButtonWidget;)Lnet/minecraft/client/gui/widget/AbstractButtonWidget;"))
   void addCustomButton(final CallbackInfo info) {
     myButton = new TexturedButtonWidget(this.x + 125, this.height / 2 - 22, 20, 18, 0, 0, 19, RECIPE_BUTTON_TEXTURE2,
-        buttonWidget -> this.client.openScreen(new CottonClientScreen(new SleepGUI())));
+        buttonWidget -> {
+          ClientPlayNetworking.send(MultiSleep.REQUEST_BUTTONSTATES_PACKET_ID, PacketByteBufs.create());
+        });
     this.addButton(myButton);
   }
 
