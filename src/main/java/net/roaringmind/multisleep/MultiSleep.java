@@ -51,11 +51,11 @@ public class MultiSleep implements ModInitializer {
 
     ServerPlayNetworking.registerGlobalReceiver(VOTE_PACKET_ID, (server, player, handler, buf, responseSender) -> {
       ClickTypes clickType = ClickTypes.fromInt(buf.readInt());
-      
+
       if (clickType == null) {
         System.out.println("something went wrong");
       }
-      
+
       switch (clickType) {
         case YES: {
           vote(player, true, false);
@@ -163,6 +163,7 @@ public class MultiSleep implements ModInitializer {
 
   public static void vote(PlayerEntity player, boolean wantsSleep, boolean canStart) {
     System.out.println("start of vote");
+
     if (!wantsSleep) {
       if (!isVoting) {
         return;
@@ -195,16 +196,17 @@ public class MultiSleep implements ModInitializer {
 
   private static boolean checkVotes(MinecraftServer server) {
     float requiredPercent = server.getGameRules().getInt(multiSleepPercent);
-    float percentNo = (((float) sleepingPlayers.size() + (float) permaSleepPlayers.size())
+    float percentYes = (((float) sleepingPlayers.size() + (float) permaSleepPlayers.size())
         / (float) server.getCurrentPlayerCount()) * (float) 100;
-    float percentYes = 100 - percentNo;
+    float percentNo = 100 - percentYes;
+
+    System.out.println("sleeping players: " + uuidSetToString(sleepingPlayers, server) + "\n"
+        + "awake players: " + uuidSetToString(awakePlayers, server) + "\n" + "permasleep players: "
+        + uuidSetToString(permaSleepPlayers, server) + "\n" + "initiator: " + initiator.getName().asString()
+        + "\n" + "isvoteing: " + String.valueOf(isVoting));
 
     System.out
         .println(percentYes + "----" + percentNo + "----" + requiredPercent + "----" + server.getCurrentPlayerCount());
-    System.out.println("sleeping players: " + uuidSetToString(sleepingPlayers, server) + "\n" + "awake players: "
-        + uuidSetToString(awakePlayers, server) + "\n" + "permasleep players: "
-        + uuidSetToString(permaSleepPlayers, server) + "\n" + "initiator: " + initiator.getName().asString());
-
     if (percentYes >= requiredPercent) {
       sleep(server);
       cancelVoting();
@@ -246,28 +248,11 @@ public class MultiSleep implements ModInitializer {
     LOGGER.log(level, "[" + MOD_NAME + "] " + message);
   }
 
-  public static void playerClick(PlayerEntity player, ClickTypes vote) {
-    System.out.println("here too");
-
-    switch (vote) {
-      case YES: {
-        System.out.println("Clicked yes");
-        vote(player, true, false);
-        return;
-      }
-      case NO: {
-        System.out.println("Clicked no");
-        vote(player, false, false);
-        return;
-      }
-    }
-  }
-
   public static void setPhantomPreferences(UUID playerUUID, boolean on) {
     if (wantsPhantoms.contains(playerUUID) == on) {
       return;
     }
-    
+
     if (on) {
       wantsPhantoms.add(playerUUID);
     } else {

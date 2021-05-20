@@ -1,14 +1,11 @@
 package net.roaringmind.multisleep.gui;
 
-import com.google.common.collect.Multiset;
-
 import io.github.cottonmc.cotton.gui.client.LightweightGuiDescription;
 import io.github.cottonmc.cotton.gui.widget.WButton;
 import io.github.cottonmc.cotton.gui.widget.WGridPanel;
 import io.github.cottonmc.cotton.gui.widget.WToggleButton;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.java.games.input.Component.Identifier.Button;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.text.LiteralText;
@@ -42,7 +39,6 @@ public class SleepGUI extends LightweightGuiDescription {
     phantoms.setToggle(MultiSleep.wantsPhantoms.contains(mc.player.getUuid()));
     phantoms.setOnToggle(on -> {
       PacketByteBuf pckt = PacketByteBufs.create();
-      pckt.writeUuid(mc.player.getUuid());
       if (on) {
         pckt.writeInt(ClickTypes.PHANTOMYES.toInt());
         ClientPlayNetworking.send(MultiSleep.VOTE_PACKET_ID, pckt);
@@ -55,7 +51,6 @@ public class SleepGUI extends LightweightGuiDescription {
     permaSleep.setToggle(MultiSleep.permaSleepPlayers.contains(mc.player.getUuid()));
     permaSleep.setOnToggle(on -> {
       PacketByteBuf pckt = PacketByteBufs.create();
-      pckt.writeUuid(mc.player.getUuid());
       if (on) {
         pckt.writeInt(ClickTypes.PERMAYES.toInt());
         ClientPlayNetworking.send(MultiSleep.VOTE_PACKET_ID, pckt);
