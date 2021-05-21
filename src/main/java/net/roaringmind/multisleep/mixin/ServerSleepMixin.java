@@ -1,5 +1,6 @@
 package net.roaringmind.multisleep.mixin;
 
+import java.util.UUID;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
@@ -46,6 +47,12 @@ public abstract class ServerSleepMixin extends World {
     }
 
     MultiSleep.log(Level.INFO, "will sleep now");
+
+    for (UUID uuid : MultiSleep.sleepingPlayers) {
+      if (this.getPlayerByUuid(uuid).isSleeping() && !this.getPlayerByUuid(uuid).isSleepingLongEnough()) {
+        return;
+      }
+    }
 
     if (this.getGameRules().getBoolean(GameRules.DO_DAYLIGHT_CYCLE)) {
       long l = this.properties.getTimeOfDay() + 24000L;

@@ -6,7 +6,6 @@ import io.github.cottonmc.cotton.gui.widget.WGridPanel;
 import io.github.cottonmc.cotton.gui.widget.WToggleButton;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.text.LiteralText;
 import net.roaringmind.multisleep.MultiSleep;
@@ -66,4 +65,3 @@ public class SleepGUI extends LightweightGuiDescription {
     root.validate(this);
   }
 }
-;

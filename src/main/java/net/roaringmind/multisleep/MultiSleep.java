@@ -80,6 +80,7 @@ public class MultiSleep implements ModInitializer {
         }
         case PERMAYES: {
           setPermaSleep(player.getUuid(), true);
+          checkVotes(server);
           return;
         }
         case PERMANO: {
@@ -156,7 +157,7 @@ public class MultiSleep implements ModInitializer {
   public static boolean shouldSleepNow = false;
   public static boolean isVoting = false;
 
-  private static Set<UUID> sleepingPlayers = new HashSet<>();
+  public static Set<UUID> sleepingPlayers = new HashSet<>();
   private static Set<UUID> awakePlayers = new HashSet<>();
   private static PlayerEntity initiator = null;
   public static Set<UUID> permaSleepPlayers = new HashSet<>();
@@ -177,6 +178,10 @@ public class MultiSleep implements ModInitializer {
 
   public static void vote(PlayerEntity player, boolean wantsSleep, boolean canStart) {
     System.out.println("start of vote");
+    if ( isVoting && (permaSleepPlayers.contains(player.getUuid()) || awakePlayers.contains(player.getUuid())
+        || sleepingPlayers.contains(player.getUuid()))) {
+      return;
+    }
 
     if (!wantsSleep) {
       if (!isVoting) {
@@ -210,7 +215,11 @@ public class MultiSleep implements ModInitializer {
 
   private static boolean checkVotes(MinecraftServer server) {
     float requiredPercent = server.getGameRules().getInt(multiSleepPercent);
-    float percentYes = (((float) sleepingPlayers.size() + (float) permaSleepPlayers.size())
+    float permasleepsize = (float) permaSleepPlayers.size();
+
+    if (permaSleepPlayers.contains(initiator.getUuid()));
+    
+    float percentYes = (((float) sleepingPlayers.size() + permasleepsize)
         / (float) server.getCurrentPlayerCount()) * (float) 100;
     float percentNo = 100 - percentYes;
 
