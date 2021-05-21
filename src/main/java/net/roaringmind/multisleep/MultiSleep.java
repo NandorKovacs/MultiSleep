@@ -80,6 +80,9 @@ public class MultiSleep implements ModInitializer {
         }
         case PERMAYES: {
           setPermaSleep(player.getUuid(), true);
+          if (!isVoting) {
+            return;
+          }
           checkVotes(server);
           return;
         }
