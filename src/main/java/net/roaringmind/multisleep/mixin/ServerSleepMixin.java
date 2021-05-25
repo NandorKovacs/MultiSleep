@@ -1,6 +1,5 @@
 package net.roaringmind.multisleep.mixin;
 
-import java.util.UUID;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
@@ -11,6 +10,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.profiler.Profiler;
 import net.minecraft.util.registry.RegistryKey;
@@ -29,18 +29,21 @@ public abstract class ServerSleepMixin extends World {
   }
 
   @Shadow
-  private boolean allPlayersSleeping;
+  public void setTimeOfDay(long timeOfDay) {
+    MultiSleep.log(Level.INFO, "sleep didnt work");
+  }
 
   @Shadow
-  public abstract void setTimeOfDay(long timeOfDay);
+  private void wakeSleepingPlayers() {
+    MultiSleep.log(Level.INFO, "wake didnt work");
+  }
 
   @Shadow
-  public abstract void wakeSleepingPlayers();
+  private void resetWeather() {
+    MultiSleep.log(Level.INFO, "weather didnt work");
+  }
 
-  @Shadow
-  public abstract void resetWeather();
-
-  @Inject(method = "tick", at = @At(value = "RETURN", args = { "log = true" }))
+  @Inject(method = "tick", at = @At(value = "RETURN"))
   public void sleepInject(BooleanSupplier shouldKeepTicking, CallbackInfo cir) {
     if (!MultiSleep.shouldSleepNow || this.isDay()) {
       return;
@@ -48,21 +51,30 @@ public abstract class ServerSleepMixin extends World {
 
     MultiSleep.log(Level.INFO, "will sleep now");
 
-    for (UUID uuid : MultiSleep.sleepingPlayers) {
-      if (this.getPlayerByUuid(uuid).isSleeping() && !this.getPlayerByUuid(uuid).isSleepingLongEnough()) {
-        return;
+    boolean everyoneSleptEnough = true;
+    for (PlayerEntity p : this.getPlayers()) {
+      if (p.isSleeping() && !p.isSleepingLongEnough()) {
+        everyoneSleptEnough = false;
       }
     }
+    if (everyoneSleptEnough) {
+      MultiSleep.log(Level.INFO, "everyoneSleptEnough: " + String.valueOf(everyoneSleptEnough));
+      if (this.getGameRules().getBoolean(GameRules.DO_DAYLIGHT_CYCLE)) {
+        MultiSleep.log(Level.INFO, "sleeping");
+        MultiSleep.log(Level.INFO, "everyoneSleptEnough: " + String.valueOf(everyoneSleptEnough));
+        long l = this.properties.getTimeOfDay() + 24000L;
+        this.setTimeOfDay(l - l % 24000L);
+      }
 
-    if (this.getGameRules().getBoolean(GameRules.DO_DAYLIGHT_CYCLE)) {
-      long l = this.properties.getTimeOfDay() + 24000L;
-      this.setTimeOfDay(l - l % 24000L);
+      this.wakeSleepingPlayers();
+      if (this.getGameRules().getBoolean(GameRules.DO_WEATHER_CYCLE)) {
+        MultiSleep.log(Level.INFO, "weather");
+        MultiSleep.log(Level.INFO, "everyoneSleptEnough: " + String.valueOf(everyoneSleptEnough));
+        this.resetWeather();
+      }
+      MultiSleep.log(Level.INFO, "setting boolean");
+      MultiSleep.log(Level.INFO, "everyoneSleptEnough: " + String.valueOf(everyoneSleptEnough));
+      MultiSleep.shouldSleepNow = false;
     }
-
-    this.wakeSleepingPlayers();
-    if (this.getGameRules().getBoolean(GameRules.DO_WEATHER_CYCLE)) {
-      this.resetWeather();
-    }
-    MultiSleep.shouldSleepNow = false;
   }
 }
