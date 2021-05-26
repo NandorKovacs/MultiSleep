@@ -45,36 +45,27 @@ public abstract class ServerSleepMixin extends World {
 
   @Inject(method = "tick", at = @At(value = "RETURN"))
   public void sleepInject(BooleanSupplier shouldKeepTicking, CallbackInfo cir) {
+    MultiSleep.log(Level.INFO, "should sleep now: " + String.valueOf(MultiSleep.shouldSleepNow));
+    
     if (!MultiSleep.shouldSleepNow || this.isDay()) {
       return;
     }
 
-    MultiSleep.log(Level.INFO, "will sleep now");
-
-    boolean everyoneSleptEnough = true;
-    for (PlayerEntity p : this.getPlayers()) {
-      if (p.isSleeping() && !p.isSleepingLongEnough()) {
-        everyoneSleptEnough = false;
-      }
+    if (this.getGameRules().getBoolean(GameRules.DO_DAYLIGHT_CYCLE)) {
+      MultiSleep.log(Level.INFO, "sleeping");
+      long l = this.properties.getTimeOfDay() + 24000L;
+      this.setTimeOfDay(l - l % 24000L);
     }
-    if (everyoneSleptEnough) {
-      MultiSleep.log(Level.INFO, "everyoneSleptEnough: " + String.valueOf(everyoneSleptEnough));
-      if (this.getGameRules().getBoolean(GameRules.DO_DAYLIGHT_CYCLE)) {
-        MultiSleep.log(Level.INFO, "sleeping");
-        MultiSleep.log(Level.INFO, "everyoneSleptEnough: " + String.valueOf(everyoneSleptEnough));
-        long l = this.properties.getTimeOfDay() + 24000L;
-        this.setTimeOfDay(l - l % 24000L);
-      }
 
-      this.wakeSleepingPlayers();
-      if (this.getGameRules().getBoolean(GameRules.DO_WEATHER_CYCLE)) {
-        MultiSleep.log(Level.INFO, "weather");
-        MultiSleep.log(Level.INFO, "everyoneSleptEnough: " + String.valueOf(everyoneSleptEnough));
-        this.resetWeather();
-      }
-      MultiSleep.log(Level.INFO, "setting boolean");
-      MultiSleep.log(Level.INFO, "everyoneSleptEnough: " + String.valueOf(everyoneSleptEnough));
-      MultiSleep.shouldSleepNow = false;
+    this.wakeSleepingPlayers();
+    if (this.getGameRules().getBoolean(GameRules.DO_WEATHER_CYCLE)) {
+      MultiSleep.log(Level.INFO, "weather");
+      this.resetWeather();
     }
+
+    MultiSleep.log(Level.INFO, "setting boolean");
+
+    MultiSleep.shouldSleepNow = false;
+    MultiSleep.log(Level.INFO, "should sleep now: " + String.valueOf(MultiSleep.shouldSleepNow));
   }
 }

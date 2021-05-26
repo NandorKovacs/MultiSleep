@@ -128,7 +128,7 @@ public class MultiSleep implements ModInitializer {
     CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> {
       dispatcher.register(literal("forcesleep")
         .executes(ctx -> {
-          sleep(ctx.getSource().getMinecraftServer());
+          trySleep = true;
           return 0;
         })
       );
@@ -148,6 +148,10 @@ public class MultiSleep implements ModInitializer {
       return ActionResult.PASS;
     });
     ServerTickEvents.START_WORLD_TICK.register(world -> {
+      if (trySleep) {
+        sleep(world.getServer());
+      }
+      
       if (currentCountdown.tick() < 0 && isVoting || shouldCancelVoting(world.getServer())) {
         cancelVoting();
       }
@@ -159,17 +163,21 @@ public class MultiSleep implements ModInitializer {
 
   public static boolean shouldSleepNow = false;
   public static boolean isVoting = false;
+  private static boolean trySleep = false;
 
   public static Set<UUID> sleepingPlayers = new HashSet<>();
   private static Set<UUID> awakePlayers = new HashSet<>();
   private static PlayerEntity initiator = null;
   public static Set<UUID> permaSleepPlayers = new HashSet<>();
   private static Countdown currentCountdown = new Countdown(30 * 20);
-
   public static Set<UUID> wantsPhantoms = new HashSet<>();
 
   private static void sleep(MinecraftServer server) {
     for (ServerPlayerEntity p : server.getPlayerManager().getPlayerList()) {
+      if (p.isSleeping() && !p.isSleepingLongEnough()) {
+        return;
+      }
+      
       if (wantsPhantoms.contains(p.getUuid())) {
         continue;
       }
@@ -177,6 +185,7 @@ public class MultiSleep implements ModInitializer {
     }
 
     shouldSleepNow = true;
+    trySleep = false;
   }
 
   public static void vote(PlayerEntity player, boolean wantsSleep, boolean canStart) {
@@ -234,7 +243,7 @@ public class MultiSleep implements ModInitializer {
     System.out
         .println(percentYes + "----" + percentNo + "----" + requiredPercent + "----" + server.getCurrentPlayerCount());
     if (percentYes >= requiredPercent) {
-      sleep(server);
+      trySleep = true;
       cancelVoting();
       return true;
     }

@@ -18,7 +18,7 @@ public class SleepGUI extends LightweightGuiDescription {
     WButton yes = new WButton(new LiteralText("Sleep"));
     WButton no = new WButton(new LiteralText("Don't sleep"));
     WToggleButton permaSleep = new WToggleButton(new LiteralText("Perma Sleep"));
-    WToggleButton phantoms = new WToggleButton(new LiteralText("Phantoms"));
+    WToggleButton phantoms = new WToggleButton(new LiteralText("No phantoms"));
 
     yes.setOnClick(() -> {
       System.out.println("im here");
