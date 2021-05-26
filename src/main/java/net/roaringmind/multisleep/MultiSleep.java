@@ -2,9 +2,7 @@ package net.roaringmind.multisleep;
 
 import static net.minecraft.server.command.CommandManager.literal;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -14,6 +12,7 @@ import org.apache.logging.log4j.Logger;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.gamerule.v1.GameRuleFactory;
 import net.fabricmc.fabric.api.gamerule.v1.GameRuleRegistry;
@@ -34,6 +33,7 @@ import net.minecraft.world.World;
 import net.roaringmind.multisleep.callbacks.TrySleepCallback;
 import net.roaringmind.multisleep.countdown.Countdown;
 import net.roaringmind.multisleep.gui.ClickTypes;
+import net.roaringmind.multisleep.saver.Saver;
 
 public class MultiSleep implements ModInitializer {
 
@@ -46,6 +46,8 @@ public class MultiSleep implements ModInitializer {
       "request_buttonstate_packet_id");
   public static final Identifier SEND_STATE_PACKET_ID = new Identifier(MOD_ID, "send_state_packet_id");
 
+  private static Saver saver;
+
   @Override
   public void onInitialize() {
     log(Level.INFO, "Initializing");
@@ -54,6 +56,14 @@ public class MultiSleep implements ModInitializer {
 
     registerEvents();
 
+    registerRecievers();
+
+    ServerLifecycleEvents.SERVER_STARTED.register(server -> {
+      saver = server.getWorld(World.OVERWORLD).getPersistentStateManager().getOrCreate(() -> new Saver(MOD_ID), MOD_ID);
+    });
+  }
+
+  private void registerRecievers() {
     ServerPlayNetworking.registerGlobalReceiver(VOTE_PACKET_ID, (server, player, handler, buf, responseSender) -> {
       ClickTypes clickType = ClickTypes.fromInt(buf.readInt());
 
@@ -97,8 +107,8 @@ public class MultiSleep implements ModInitializer {
         (server, player, handler, buf, responseSender) -> {
           PacketByteBuf state = PacketByteBufs.create();
           int[] states = new int[2];
-          states[0] = boolToInt(wantsPhantoms.contains(player.getUuid()));
-          states[1] = boolToInt(permaSleepPlayers.contains(player.getUuid()));
+          states[0] = boolToInt(saver.phantomContainsPlayer(player.getUuid()));
+          states[1] = boolToInt(saver.permaContainsPlayer(player.getUuid()));
           state.writeIntArray(states);
 
           ServerPlayNetworking.send(player, SEND_STATE_PACKET_ID, state);
@@ -151,7 +161,7 @@ public class MultiSleep implements ModInitializer {
       if (trySleep) {
         sleep(world.getServer());
       }
-      
+
       if (currentCountdown.tick() < 0 && isVoting || shouldCancelVoting(world.getServer())) {
         cancelVoting();
       }
@@ -168,17 +178,15 @@ public class MultiSleep implements ModInitializer {
   public static Set<UUID> sleepingPlayers = new HashSet<>();
   private static Set<UUID> awakePlayers = new HashSet<>();
   private static PlayerEntity initiator = null;
-  public static Set<UUID> permaSleepPlayers = new HashSet<>();
   private static Countdown currentCountdown = new Countdown(30 * 20);
-  public static Set<UUID> wantsPhantoms = new HashSet<>();
 
   private static void sleep(MinecraftServer server) {
     for (ServerPlayerEntity p : server.getPlayerManager().getPlayerList()) {
       if (p.isSleeping() && !p.isSleepingLongEnough()) {
         return;
       }
-      
-      if (wantsPhantoms.contains(p.getUuid())) {
+
+      if (saver.phantomContainsPlayer(p.getUuid())) {
         continue;
       }
       p.getStatHandler().setStat(p, Stats.CUSTOM.getOrCreateStat(Stats.TIME_SINCE_REST), 0);
@@ -189,8 +197,7 @@ public class MultiSleep implements ModInitializer {
   }
 
   public static void vote(PlayerEntity player, boolean wantsSleep, boolean canStart) {
-    System.out.println("start of vote");
-    if ( isVoting && (permaSleepPlayers.contains(player.getUuid()) || awakePlayers.contains(player.getUuid())
+    if (isVoting && (saver.permaContainsPlayer(player.getUuid()) || awakePlayers.contains(player.getUuid())
         || sleepingPlayers.contains(player.getUuid()))) {
       return;
     }
@@ -227,21 +234,16 @@ public class MultiSleep implements ModInitializer {
 
   private static boolean checkVotes(MinecraftServer server) {
     float requiredPercent = server.getGameRules().getInt(multiSleepPercent);
-    float permasleepsize = (float) permaSleepPlayers.size();
+    float permasleepsize = (float) saver.permaSize();
 
-    if (permaSleepPlayers.contains(initiator.getUuid()));
-    
-    float percentYes = (((float) sleepingPlayers.size() + permasleepsize)
-        / (float) server.getCurrentPlayerCount()) * (float) 100;
+    if (saver.permaContainsPlayer(initiator.getUuid())) {
+      permasleepsize -= 1;
+    }
+
+    float percentYes = (((float) sleepingPlayers.size() + permasleepsize) / (float) server.getCurrentPlayerCount())
+        * (float) 100;
     float percentNo = 100 - percentYes;
 
-    System.out.println("sleeping players: " + uuidSetToString(sleepingPlayers, server) + "\n" + "awake players: "
-        + uuidSetToString(awakePlayers, server) + "\n" + "permasleep players: "
-        + uuidSetToString(permaSleepPlayers, server) + "\n" + "initiator: " + initiator.getName().asString() + "\n"
-        + "isvoteing: " + String.valueOf(isVoting));
-
-    System.out
-        .println(percentYes + "----" + percentNo + "----" + requiredPercent + "----" + server.getCurrentPlayerCount());
     if (percentYes >= requiredPercent) {
       trySleep = true;
       cancelVoting();
@@ -284,36 +286,18 @@ public class MultiSleep implements ModInitializer {
   }
 
   public static void setPhantomPreferences(UUID playerUUID, boolean on) {
-    if (wantsPhantoms.contains(playerUUID) == on) {
-      return;
-    }
-
     if (on) {
-      wantsPhantoms.add(playerUUID);
+      saver.addPhantomPlayer(playerUUID);
     } else {
-      wantsPhantoms.remove(playerUUID);
+      saver.removePhantomPlayer(playerUUID);
     }
   }
 
   public static void setPermaSleep(UUID playerUUID, boolean on) {
-    if (permaSleepPlayers.contains(playerUUID) == on) {
-      return;
-    }
-
     if (on) {
-      permaSleepPlayers.add(playerUUID);
+      saver.addPermaPlayer(playerUUID);
     } else {
-      permaSleepPlayers.remove(playerUUID);
+      saver.removePermaPlayer(playerUUID);
     }
-  }
-
-  private static String uuidSetToString(Set<UUID> playerSet, MinecraftServer server) {
-    List<String> nameList = new ArrayList<>();
-
-    for (UUID uuid : playerSet) {
-      nameList.add(server.getPlayerManager().getPlayer(uuid).getName().asString());
-    }
-
-    return "{" + String.join(", ", nameList) + "}";
   }
 }
