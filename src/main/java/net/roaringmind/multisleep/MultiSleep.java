@@ -171,12 +171,23 @@ public class MultiSleep implements ModInitializer {
 
       int countdownStatus = currentCountdown.tick();
 
-      if (countdownStatus >= -1) {
-        for (PlayerEntity p : world.getPlayers()) {
-          PacketByteBuf buf = PacketByteBufs.create();
+      for (PlayerEntity p : world.getPlayers()) {
+        PacketByteBuf buf = PacketByteBufs.create();
+        if (countdownStatus < 0 || saver.permaContainsPlayer(p.getUuid())
+            || (initiator != null && p.getUuid() == initiator.getUuid()) || p.isSleeping()) {
+
+          log("#######################################################\n" + p.getName().asString() + "\nstatus: " + countdownStatus
+              + "\ncontains player: " + String.valueOf(saver.permaContainsPlayer(p.getUuid())) + "\nis sleeping: "
+              + String.valueOf(p.isSleeping()) + "\n#######################################################");
+
+          buf.writeInt(-1);
+        } else {
+          log(Level.WARN, "#######################################################\n" + p.getName().asString()
+              + "\n#######################################################");
+
           buf.writeInt(countdownStatus);
-          ServerPlayNetworking.send((ServerPlayerEntity) p, COUNTDOWN_STATUS, buf);
         }
+        ServerPlayNetworking.send((ServerPlayerEntity) p, COUNTDOWN_STATUS, buf);
       }
 
       if (countdownStatus < 0 && isVoting) {
@@ -184,7 +195,6 @@ public class MultiSleep implements ModInitializer {
           trySleep = true;
           log(Level.INFO, "tried sleeping");
         }
-
         cancelVoting();
       }
       if (isVoting && !initiator.isSleeping()) {
@@ -287,6 +297,7 @@ public class MultiSleep implements ModInitializer {
     awakePlayers = new HashSet<>();
     sleepingPlayers = new HashSet<>();
     initiator = null;
+    currentCountdown.set(0);
   }
 
   private boolean shouldSleep(MinecraftServer server) {
@@ -306,6 +317,10 @@ public class MultiSleep implements ModInitializer {
 
   public static void log(Level level, String message) {
     LOGGER.log(level, "[" + MOD_NAME + "] " + message);
+  }
+
+  public static void log(String message) {
+    log(Level.INFO, message);
   }
 
   public static void setPhantomPreferences(UUID playerUUID, boolean on) {
