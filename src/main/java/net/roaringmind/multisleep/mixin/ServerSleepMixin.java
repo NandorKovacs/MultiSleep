@@ -1,5 +1,7 @@
 package net.roaringmind.multisleep.mixin;
 
+import static net.roaringmind.multisleep.MultiSleep.log;
+
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
@@ -29,36 +31,46 @@ public abstract class ServerSleepMixin extends World {
 
   @Shadow
   public void setTimeOfDay(long timeOfDay) {
-    MultiSleep.log(Level.INFO, "sleep didnt work");
+    log(Level.INFO, "sleep didnt work");
   }
 
   @Shadow
   private void wakeSleepingPlayers() {
-    MultiSleep.log(Level.INFO, "wake didnt work");
+    log(Level.INFO, "wake didnt work");
   }
 
   @Shadow
   private void resetWeather() {
-    MultiSleep.log(Level.INFO, "weather didnt work");
+    log(Level.INFO, "weather didnt work");
   }
 
   @Inject(method = "tick", at = @At(value = "RETURN"))
   public void sleepInject(BooleanSupplier shouldKeepTicking, CallbackInfo cir) {
-    
+
     if (!MultiSleep.shouldSleepNow || this.isDay()) {
       return;
     }
 
-    if (this.getGameRules().getBoolean(GameRules.DO_DAYLIGHT_CYCLE)) {
-      long l = this.properties.getTimeOfDay() + 24000L;
-      this.setTimeOfDay(l - l % 24000L);
+    log("[ServerSleepMixin] trying to sleep");
+
+    boolean daycicle = this.getGameRules().getBoolean(GameRules.DO_DAYLIGHT_CYCLE);
+    boolean doweather = this.getGameRules().getBoolean(GameRules.DO_WEATHER_CYCLE);
+
+    log("[ServerSleepMixin] daycicle: " + String.valueOf(daycicle));
+    log("[ServerSleepMixin] weathercycle: " + String.valueOf(doweather));
+
+    if (daycicle) {
+      this.setTimeOfDay(0);
+      log("[ServerSleepMixin] set time");
     }
 
     this.wakeSleepingPlayers();
-    if (this.getGameRules().getBoolean(GameRules.DO_WEATHER_CYCLE)) {
+    if (doweather) {
       this.resetWeather();
+      log("[ServerSleepMixin] set weather");
     }
 
+    log("[ServerSleepMixin] should sleep now false");
     MultiSleep.shouldSleepNow = false;
   }
 }

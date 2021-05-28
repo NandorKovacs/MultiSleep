@@ -1,9 +1,5 @@
 package net.roaringmind.multisleep;
 
-import com.google.common.collect.Multiset;
-
-import org.apache.logging.log4j.Level;
-
 import io.github.cottonmc.cotton.gui.client.CottonClientScreen;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -59,12 +55,9 @@ public class ClientMultiSleep implements ClientModInitializer {
         progress = previousCountdown;
       }
 
-      MultiSleep.log(Level.INFO, "progress: " + progress);
       int color = MathHelper.packRgb(138, 43, 226) + (255 << 24);
       DrawableHelper.fill(matrixStack, 0, 0, width, 10, 150 << 24);
       DrawableHelper.fill(matrixStack, 0, 0, progress, 10, color);
-      MultiSleep.log(Level.INFO, "color: " + color);
-      MultiSleep.log(Level.INFO, "------------------------------");
 
       DrawableHelper.fill(matrixStack, 0, 0, progress, 10, 255);
       previousCountdown = progress;
@@ -91,9 +84,6 @@ public class ClientMultiSleep implements ClientModInitializer {
 
     ClientPlayNetworking.registerGlobalReceiver(MultiSleep.COUNTDOWN_STATUS, (client, handler, buf, responseSender) -> {
       int bufInt = buf.readInt();
-
-      MultiSleep.log(Level.INFO, "------------------------------");
-      MultiSleep.log(Level.INFO, "recieved int: " + bufInt);
       if (bufInt <= -1) {
         countdownStatus = -1;
         previousCountdown = -1;
@@ -102,7 +92,6 @@ public class ClientMultiSleep implements ClientModInitializer {
 
       countdownStatus = (int) (((float) client.getWindow().getScaledWidth() / (float) MultiSleep.COUNTDOWN_LENGTH)
           * (float) bufInt);
-      MultiSleep.log(Level.INFO, "countdownstatus: " + countdownStatus);
     });
   }
 

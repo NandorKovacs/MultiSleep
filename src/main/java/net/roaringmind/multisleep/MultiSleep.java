@@ -149,7 +149,7 @@ public class MultiSleep implements ModInitializer {
           return 0;
         })
       );
-      dispatcher.register(literal("resetcountdown") 
+      dispatcher.register(literal("resetcountdown")
         .executes(ctx -> {
           currentCountdown.restart();
           return 0;
@@ -175,16 +175,8 @@ public class MultiSleep implements ModInitializer {
         PacketByteBuf buf = PacketByteBufs.create();
         if (countdownStatus < 0 || saver.permaContainsPlayer(p.getUuid())
             || (initiator != null && p.getUuid() == initiator.getUuid()) || p.isSleeping()) {
-
-          log("#######################################################\n" + p.getName().asString() + "\nstatus: " + countdownStatus
-              + "\ncontains player: " + String.valueOf(saver.permaContainsPlayer(p.getUuid())) + "\nis sleeping: "
-              + String.valueOf(p.isSleeping()) + "\n#######################################################");
-
           buf.writeInt(-1);
         } else {
-          log(Level.WARN, "#######################################################\n" + p.getName().asString()
-              + "\n#######################################################");
-
           buf.writeInt(countdownStatus);
         }
         ServerPlayNetworking.send((ServerPlayerEntity) p, COUNTDOWN_STATUS, buf);
