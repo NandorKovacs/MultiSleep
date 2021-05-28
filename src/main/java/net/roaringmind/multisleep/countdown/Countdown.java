@@ -6,7 +6,7 @@ public class Countdown {
 
   public Countdown(int ticks) {
     maxTicks = ticks;
-    this.ticks = 0;
+    this.ticks = -1;
   }  
 
   public void restart() {

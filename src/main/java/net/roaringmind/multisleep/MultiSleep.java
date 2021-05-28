@@ -45,6 +45,7 @@ public class MultiSleep implements ModInitializer {
   public static final Identifier REQUEST_BUTTONSTATES_PACKET_ID = new Identifier(MOD_ID,
       "request_buttonstate_packet_id");
   public static final Identifier SEND_STATE_PACKET_ID = new Identifier(MOD_ID, "send_state_packet_id");
+  public static final Identifier COUNTDOWN_STATUS = new Identifier(MOD_ID, "countdown_status");
 
   private static Saver saver;
 
@@ -148,6 +149,12 @@ public class MultiSleep implements ModInitializer {
           return 0;
         })
       );
+      dispatcher.register(literal("resetcountdown") 
+        .executes(ctx -> {
+          currentCountdown.restart();
+          return 0;
+        })
+      );
     });
   }
   //@formatter:on
@@ -162,7 +169,22 @@ public class MultiSleep implements ModInitializer {
         sleep(world.getServer());
       }
 
-      if (currentCountdown.tick() < 0 && isVoting || shouldCancelVoting(world.getServer())) {
+      int countdownStatus = currentCountdown.tick();
+
+      if (countdownStatus >= -1) {
+        for (PlayerEntity p : world.getPlayers()) {
+          PacketByteBuf buf = PacketByteBufs.create();
+          buf.writeInt(countdownStatus);
+          ServerPlayNetworking.send((ServerPlayerEntity) p, COUNTDOWN_STATUS, buf);
+        }
+      }
+
+      if (countdownStatus < 0 && isVoting) {
+        if (shouldSleep(world.getServer())) {
+          trySleep = true;
+          log(Level.INFO, "tried sleeping");
+        }
+
         cancelVoting();
       }
       if (isVoting && !initiator.isSleeping()) {
@@ -178,11 +200,13 @@ public class MultiSleep implements ModInitializer {
   public static Set<UUID> sleepingPlayers = new HashSet<>();
   private static Set<UUID> awakePlayers = new HashSet<>();
   private static PlayerEntity initiator = null;
-  private static Countdown currentCountdown = new Countdown(30 * 20);
+  public static final int COUNTDOWN_LENGTH = 30 * 20;
+  private static Countdown currentCountdown = new Countdown(COUNTDOWN_LENGTH);
 
   private static void sleep(MinecraftServer server) {
     for (ServerPlayerEntity p : server.getPlayerManager().getPlayerList()) {
       if (p.isSleeping() && !p.isSleepingLongEnough()) {
+        log(Level.INFO, "didnt sleep long enough");
         return;
       }
 
@@ -192,6 +216,7 @@ public class MultiSleep implements ModInitializer {
       p.getStatHandler().setStat(p, Stats.CUSTOM.getOrCreateStat(Stats.TIME_SINCE_REST), 0);
     }
 
+    log(Level.INFO, "should be sleeping now");
     shouldSleepNow = true;
     trySleep = false;
   }
@@ -264,11 +289,9 @@ public class MultiSleep implements ModInitializer {
     initiator = null;
   }
 
-  private boolean shouldCancelVoting(MinecraftServer server) {
+  private boolean shouldSleep(MinecraftServer server) {
     boolean somebodyIndBed = false;
-    for (UUID uuid : sleepingPlayers) {
-      PlayerEntity p = server.getPlayerManager().getPlayer(uuid);
-
+    for (PlayerEntity p : server.getPlayerManager().getPlayerList()) {
       if (p.isSleepingLongEnough()) {
         somebodyIndBed = true;
         break;
@@ -276,9 +299,9 @@ public class MultiSleep implements ModInitializer {
     }
 
     if (server.getWorld(World.OVERWORLD).isDay() && !somebodyIndBed) {
-      return true;
+      return false;
     }
-    return false;
+    return true;
   }
 
   public static void log(Level level, String message) {

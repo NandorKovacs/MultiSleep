@@ -1,5 +1,9 @@
 package net.roaringmind.multisleep;
 
+import com.google.common.collect.Multiset;
+
+import org.apache.logging.log4j.Level;
+
 import io.github.cottonmc.cotton.gui.client.CottonClientScreen;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -11,6 +15,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawableHelper;
 import net.minecraft.client.options.KeyBinding;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.util.math.MathHelper;
 import net.roaringmind.multisleep.gui.SleepGUI;
 
 public class ClientMultiSleep implements ClientModInitializer {
@@ -24,13 +29,13 @@ public class ClientMultiSleep implements ClientModInitializer {
 
     registerEvents();
 
-    ClientPlayNetworking.registerGlobalReceiver(MultiSleep.SEND_STATE_PACKET_ID, (client, handler, buf, responseSender) -> {
-      int[] states = buf.readIntArray();
-      MinecraftClient.getInstance().openScreen(new CottonClientScreen(new SleepGUI(intToBool(states[0]), intToBool(states[1]))));
-    });
+    registerRecievers();
   }
 
-  private static void registerEvents() {
+  private static int countdownStatus = -1;
+  private static int previousCountdown = 0;
+
+  private void registerEvents() {
     ClientTickEvents.END_CLIENT_TICK.register(client -> {
       while (guiKeyBinding.wasPressed()) {
         ClientPlayNetworking.send(MultiSleep.REQUEST_BUTTONSTATES_PACKET_ID, PacketByteBufs.create());
@@ -45,17 +50,60 @@ public class ClientMultiSleep implements ClientModInitializer {
     });
 
     HudRenderCallback.EVENT.register((matrixStack, tickDelta) -> {
-      DrawableHelper.fill(matrixStack, 0, 0, MinecraftClient.getInstance().getWindow().getScaledWidth(), 10, 150 << 24);
+      if (countdownStatus <= -1 && previousCountdown <= 0) {
+        return;
+      }
+      int width = MinecraftClient.getInstance().getWindow().getScaledWidth();
+      int progress = countdownStatus;
+      if (countdownStatus <= -1) {
+        progress = previousCountdown;
+      }
+
+      MultiSleep.log(Level.INFO, "progress: " + progress);
+      int color = MathHelper.packRgb(138, 43, 226) + (255 << 24);
+      DrawableHelper.fill(matrixStack, 0, 0, width, 10, 150 << 24);
+      DrawableHelper.fill(matrixStack, 0, 0, progress, 10, color);
+      MultiSleep.log(Level.INFO, "color: " + color);
+      MultiSleep.log(Level.INFO, "------------------------------");
+
+      DrawableHelper.fill(matrixStack, 0, 0, progress, 10, 255);
+      previousCountdown = progress;
+      countdownStatus = -1;
     });
   }
 
-  private static void registerKeyBinds() {
+  private void registerKeyBinds() {
     guiKeyBinding = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.multisleep.opengui", InputUtil.Type.KEYSYM,
         InputUtil.UNKNOWN_KEY.getCode(), "category.multisleep.keybinds"));
     voteYesKeyBinding = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.multisleep.voteyes",
         InputUtil.Type.KEYSYM, InputUtil.UNKNOWN_KEY.getCode(), "category.multisleep.keybinds"));
     voteNoKeyBinding = KeyBindingHelper.registerKeyBinding(new KeyBinding("key.multisleep.voteno",
         InputUtil.Type.KEYSYM, InputUtil.UNKNOWN_KEY.getCode(), "category.multisleep.keybinds"));
+  }
+
+  private void registerRecievers() {
+    ClientPlayNetworking.registerGlobalReceiver(MultiSleep.SEND_STATE_PACKET_ID,
+        (client, handler, buf, responseSender) -> {
+          int[] states = buf.readIntArray();
+          MinecraftClient.getInstance()
+              .openScreen(new CottonClientScreen(new SleepGUI(intToBool(states[0]), intToBool(states[1]))));
+        });
+
+    ClientPlayNetworking.registerGlobalReceiver(MultiSleep.COUNTDOWN_STATUS, (client, handler, buf, responseSender) -> {
+      int bufInt = buf.readInt();
+
+      MultiSleep.log(Level.INFO, "------------------------------");
+      MultiSleep.log(Level.INFO, "recieved int: " + bufInt);
+      if (bufInt <= -1) {
+        countdownStatus = -1;
+        previousCountdown = -1;
+        return;
+      }
+
+      countdownStatus = (int) (((float) client.getWindow().getScaledWidth() / (float) MultiSleep.COUNTDOWN_LENGTH)
+          * (float) bufInt);
+      MultiSleep.log(Level.INFO, "countdownstatus: " + countdownStatus);
+    });
   }
 
   private boolean intToBool(int n) {
