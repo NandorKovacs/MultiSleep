@@ -34,6 +34,7 @@ import net.roaringmind.multisleep.callbacks.TrySleepCallback;
 import net.roaringmind.multisleep.countdown.Countdown;
 import net.roaringmind.multisleep.gui.ClickTypes;
 import net.roaringmind.multisleep.saver.Saver;
+import net.roaringmind.multisleep.util.ServerSleepAccess;
 
 public class MultiSleep implements ModInitializer {
 
@@ -139,7 +140,7 @@ public class MultiSleep implements ModInitializer {
     CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> {
       dispatcher.register(literal("forcesleep")
         .executes(ctx -> {
-          trySleep = true;
+          sleep(ctx.getSource().getMinecraftServer());
           return 0;
         })
       );
@@ -184,8 +185,9 @@ public class MultiSleep implements ModInitializer {
 
       if (countdownStatus < 0 && isVoting) {
         if (shouldSleep(world.getServer())) {
-          trySleep = true;
-          log(Level.INFO, "tried sleeping");
+          sleep(world.getServer());
+
+          log(Level.INFO, "classloader: " + MultiSleep.class.getClassLoader());
         }
         cancelVoting();
       }
@@ -195,9 +197,8 @@ public class MultiSleep implements ModInitializer {
     });
   }
 
-  public static boolean shouldSleepNow = false;
   public static boolean isVoting = false;
-  private static boolean trySleep = false;
+  public static boolean trySleep = false;
 
   public static Set<UUID> sleepingPlayers = new HashSet<>();
   private static Set<UUID> awakePlayers = new HashSet<>();
@@ -209,6 +210,7 @@ public class MultiSleep implements ModInitializer {
     for (ServerPlayerEntity p : server.getPlayerManager().getPlayerList()) {
       if (p.isSleeping() && !p.isSleepingLongEnough()) {
         log(Level.INFO, "didnt sleep long enough");
+        trySleep = true;
         return;
       }
 
@@ -219,7 +221,7 @@ public class MultiSleep implements ModInitializer {
     }
 
     log(Level.INFO, "should be sleeping now");
-    shouldSleepNow = true;
+    ((ServerSleepAccess)(server.getWorld(World.OVERWORLD))).sleep();
     trySleep = false;
   }
 
@@ -272,7 +274,8 @@ public class MultiSleep implements ModInitializer {
     float percentNo = 100 - percentYes;
 
     if (percentYes >= requiredPercent) {
-      trySleep = true;
+      sleep(server);
+      log("classloader: " + MultiSleep.class.getClassLoader());
       cancelVoting();
       return true;
     }
@@ -301,7 +304,7 @@ public class MultiSleep implements ModInitializer {
       }
     }
 
-    if (server.getWorld(World.OVERWORLD).isDay() && !somebodyIndBed) {
+    if (server.getWorld(World.OVERWORLD).isDay() || !somebodyIndBed) {
       return false;
     }
     return true;
