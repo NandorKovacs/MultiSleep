@@ -186,8 +186,6 @@ public class MultiSleep implements ModInitializer {
       if (countdownStatus < 0 && isVoting) {
         if (shouldSleep(world.getServer())) {
           sleep(world.getServer());
-
-          log(Level.INFO, "classloader: " + MultiSleep.class.getClassLoader());
         }
         cancelVoting();
       }
@@ -209,7 +207,11 @@ public class MultiSleep implements ModInitializer {
   private static void sleep(MinecraftServer server) {
     for (ServerPlayerEntity p : server.getPlayerManager().getPlayerList()) {
       if (p.isSleeping() && !p.isSleepingLongEnough()) {
-        log(Level.INFO, "didnt sleep long enough");
+        trySleep = true;
+        return;
+      }
+
+      if (initiator == p && !p.isSleepingLongEnough()) {
         trySleep = true;
         return;
       }
@@ -220,8 +222,7 @@ public class MultiSleep implements ModInitializer {
       p.getStatHandler().setStat(p, Stats.CUSTOM.getOrCreateStat(Stats.TIME_SINCE_REST), 0);
     }
 
-    log(Level.INFO, "should be sleeping now");
-    ((ServerSleepAccess)(server.getWorld(World.OVERWORLD))).sleep();
+    ((ServerSleepAccess) (server.getWorld(World.OVERWORLD))).sleep();
     trySleep = false;
   }
 
@@ -263,10 +264,12 @@ public class MultiSleep implements ModInitializer {
 
   private static boolean checkVotes(MinecraftServer server) {
     float requiredPercent = server.getGameRules().getInt(multiSleepPercent);
-    float permasleepsize = (float) saver.permaSize();
+    float permasleepsize = 0.0F;
 
-    if (saver.permaContainsPlayer(initiator.getUuid())) {
-      permasleepsize -= 1;
+    for (PlayerEntity p : server.getPlayerManager().getPlayerList()) {
+      if (saver.permaContainsPlayer(p.getUuid())) {
+        permasleepsize += 1;
+      }
     }
 
     float percentYes = (((float) sleepingPlayers.size() + permasleepsize) / (float) server.getCurrentPlayerCount())
@@ -275,7 +278,6 @@ public class MultiSleep implements ModInitializer {
 
     if (percentYes >= requiredPercent) {
       sleep(server);
-      log("classloader: " + MultiSleep.class.getClassLoader());
       cancelVoting();
       return true;
     }

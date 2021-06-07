@@ -27,17 +27,17 @@ public abstract class ServerSleepMixin extends World implements ServerSleepAcces
 
   @Shadow
   public void setTimeOfDay(long timeOfDay) {
-    log(Level.INFO, "sleep didnt work");
+    log(Level.INFO, "shadowing setTimeOfDay didnt work");
   }
 
   @Shadow
   private void wakeSleepingPlayers() {
-    log(Level.INFO, "wake didnt work");
+    log(Level.INFO, "shadowing wakeSleepingPlayers didnt work");
   }
 
   @Shadow
   private void resetWeather() {
-    log(Level.INFO, "weather didnt work");
+    log(Level.INFO, "shadowing resetWeather didnt work");
   }
 
   @Override

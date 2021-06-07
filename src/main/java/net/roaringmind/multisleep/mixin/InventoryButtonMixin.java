@@ -17,7 +17,7 @@ import net.roaringmind.multisleep.MultiSleep;
 
 @Mixin(InventoryScreen.class)
 public abstract class InventoryButtonMixin extends AbstractInventoryScreen<PlayerScreenHandler> {
-  private static final Identifier RECIPE_BUTTON_TEXTURE2 = new Identifier("textures/gui/recipe_button.png");
+  private static final Identifier SLEEP_BUTTON = new Identifier(MultiSleep.MOD_ID, "textures/gui/sleep_button.png");
   private TexturedButtonWidget myButton;
 
   InventoryButtonMixin() {
@@ -26,7 +26,7 @@ public abstract class InventoryButtonMixin extends AbstractInventoryScreen<Playe
 
   @Inject(method = "init", at = @At(value = "INVOKE_ASSIGN", target = "Lnet/minecraft/client/gui/screen/ingame/InventoryScreen;addButton(Lnet/minecraft/client/gui/widget/AbstractButtonWidget;)Lnet/minecraft/client/gui/widget/AbstractButtonWidget;"))
   void addCustomButton(final CallbackInfo info) {
-    myButton = new TexturedButtonWidget(this.x + 125, this.height / 2 - 22, 20, 18, 0, 0, 19, RECIPE_BUTTON_TEXTURE2,
+    myButton = new TexturedButtonWidget(this.x + 125, this.height / 2 - 22, 20, 18, 0, 0, 19, SLEEP_BUTTON,
         buttonWidget -> {
           ClientPlayNetworking.send(MultiSleep.REQUEST_BUTTONSTATES_PACKET_ID, PacketByteBufs.create());
         });
