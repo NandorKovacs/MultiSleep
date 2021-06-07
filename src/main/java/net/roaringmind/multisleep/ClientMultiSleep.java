@@ -90,7 +90,7 @@ public class ClientMultiSleep implements ClientModInitializer {
         return;
       }
 
-      countdownStatus = (int) (((float) client.getWindow().getScaledWidth() / (float) MultiSleep.COUNTDOWN_LENGTH)
+      countdownStatus = (int) (((float) client.getWindow().getScaledWidth() / (float) MultiSleep.countdownLength)
           * (float) bufInt);
     });
   }

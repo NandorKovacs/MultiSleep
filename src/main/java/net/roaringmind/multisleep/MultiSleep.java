@@ -1,10 +1,13 @@
 package net.roaringmind.multisleep;
 
 import static net.minecraft.server.command.CommandManager.literal;
+import static net.minecraft.server.command.CommandManager.argument;
 
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
@@ -147,18 +150,18 @@ public class MultiSleep implements ModInitializer {
   //@formatter:off
   private void registerCommands() {
     CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> {
-      dispatcher.register(literal("forcesleep")
-        .executes(ctx -> {
-          sleep(ctx.getSource().getMinecraftServer());
-          return 0;
-        })
+      dispatcher.register(literal("setCountdownTime")
+        .then(argument("ticks", IntegerArgumentType.integer())
+          .requires(src -> src.hasPermissionLevel(4))
+            .executes(ctx -> {
+              int countdownTime = IntegerArgumentType.getInteger(ctx, "ticks");
+              currentCountdown = new Countdown(countdownTime);
+              countdownLength = IntegerArgumentType.getInteger(ctx, "ticks");
+              return 0;
+            })
+        )
       );
-      dispatcher.register(literal("opme")
-        .executes(ctx -> {
-          ctx.getSource().getMinecraftServer().getPlayerManager().addToOperators(ctx.getSource().getPlayer().getGameProfile());
-          return 0;
-        })
-      );
+
       dispatcher.register(literal("resetcountdown")
         .executes(ctx -> {
           currentCountdown.restart();
@@ -210,8 +213,8 @@ public class MultiSleep implements ModInitializer {
   public static Set<UUID> sleepingPlayers = new HashSet<>();
   private static Set<UUID> awakePlayers = new HashSet<>();
   private static PlayerEntity initiator = null;
-  public static final int COUNTDOWN_LENGTH = 30 * 20;
-  private static Countdown currentCountdown = new Countdown(COUNTDOWN_LENGTH);
+  public static int countdownLength = 60 * 20;
+  private static Countdown currentCountdown = new Countdown(countdownLength);
 
   private static void sleep(MinecraftServer server) {
     for (ServerPlayerEntity p : server.getPlayerManager().getPlayerList()) {
