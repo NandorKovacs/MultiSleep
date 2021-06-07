@@ -70,7 +70,7 @@ public class MultiSleep implements ModInitializer {
       ClickTypes clickType = ClickTypes.fromInt(buf.readInt());
 
       if (clickType == null) {
-        System.out.println("something went wrong");
+        log(Level.WARN ,"ClickType is null; registerRecievers();");
       }
 
       switch (clickType) {
@@ -252,6 +252,10 @@ public class MultiSleep implements ModInitializer {
 
   private static void startVoting(PlayerEntity player) {
     for (PlayerEntity p : player.getServer().getPlayerManager().getPlayerList()) {
+      if (p == player) {
+        continue;
+      }
+      
       p.sendMessage(new LiteralText(player.getName().asString() + " wants to sleep, please vote"), true);
       p.sendMessage(new LiteralText(player.getName().asString() + " wants to sleep, please vote"), false);
     }
