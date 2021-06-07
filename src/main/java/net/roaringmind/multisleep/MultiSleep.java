@@ -26,9 +26,11 @@ import net.minecraft.stat.Stats;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.world.GameRules.Category;
 import net.minecraft.world.GameRules.IntRule;
 import net.minecraft.world.GameRules.Key;
+import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.World;
 import net.roaringmind.multisleep.callbacks.TrySleepCallback;
 import net.roaringmind.multisleep.countdown.Countdown;
@@ -70,15 +72,22 @@ public class MultiSleep implements ModInitializer {
       ClickTypes clickType = ClickTypes.fromInt(buf.readInt());
 
       if (clickType == null) {
-        log(Level.WARN ,"ClickType is null; registerRecievers();");
+        log(Level.WARN, "ClickType is null; registerRecievers();");
       }
 
       switch (clickType) {
         case YES: {
+          if (!isOverworldPlayer(player)) {
+            return;
+          }
+
           vote(player, true, false);
           return;
         }
         case NO: {
+          if (!isOverworldPlayer(player)) {
+            return;
+          }
           vote(player, false, false);
           return;
         }
@@ -92,7 +101,7 @@ public class MultiSleep implements ModInitializer {
         }
         case PERMAYES: {
           setPermaSleep(player.getUuid(), true);
-          if (!isVoting) {
+          if (!isVoting || !isOverworldPlayer(player)) {
             return;
           }
           checkVotes(server);
@@ -174,12 +183,12 @@ public class MultiSleep implements ModInitializer {
 
       for (PlayerEntity p : world.getPlayers()) {
         PacketByteBuf buf = PacketByteBufs.create();
-        if (countdownStatus < 0 || saver.permaContainsPlayer(p.getUuid())
-            || (initiator != null && p.getUuid() == initiator.getUuid()) || p.isSleeping()) {
-          buf.writeInt(-1);
-        } else {
-          buf.writeInt(countdownStatus);
+        if (countdownStatus < -1 || saver.permaContainsPlayer(p.getUuid())
+            || (initiator != null && p.getUuid() == initiator.getUuid()) || p.isSleeping() || !isOverworldPlayer(p)) {
+          continue;
         }
+
+        buf.writeInt(countdownStatus);
         ServerPlayNetworking.send((ServerPlayerEntity) p, COUNTDOWN_STATUS, buf);
       }
 
@@ -255,7 +264,7 @@ public class MultiSleep implements ModInitializer {
       if (p == player) {
         continue;
       }
-      
+
       p.sendMessage(new LiteralText(player.getName().asString() + " wants to sleep, please vote"), true);
       p.sendMessage(new LiteralText(player.getName().asString() + " wants to sleep, please vote"), false);
     }
@@ -269,15 +278,29 @@ public class MultiSleep implements ModInitializer {
   private static boolean checkVotes(MinecraftServer server) {
     float requiredPercent = server.getGameRules().getInt(multiSleepPercent);
     float permasleepsize = 0.0F;
+    float playercount = 0.0F;
+    float sleepingplayercount = 0.0F;
 
     for (PlayerEntity p : server.getPlayerManager().getPlayerList()) {
+      if (!isOverworldPlayer(p)) {
+        continue;
+      }
       if (saver.permaContainsPlayer(p.getUuid())) {
         permasleepsize += 1;
       }
+
+      if (sleepingPlayers.contains(p.getUuid())) {
+        sleepingplayercount += 1;
+      }
+
+      playercount += 1;
     }
 
-    float percentYes = (((float) sleepingPlayers.size() + permasleepsize) / (float) server.getCurrentPlayerCount())
-        * (float) 100;
+    if (playercount == 0) {
+      log(Level.FATAL, "playercount is zero");
+    }
+
+    float percentYes = ((sleepingplayercount + permasleepsize) / playercount) * (float) 100;
     float percentNo = 100 - percentYes;
 
     if (percentYes >= requiredPercent) {
@@ -338,5 +361,11 @@ public class MultiSleep implements ModInitializer {
     } else {
       saver.removePermaPlayer(playerUUID);
     }
+  }
+
+  public static boolean isOverworldPlayer(PlayerEntity p) {
+    Registry<DimensionType> dimReg = p.getServer().getRegistryManager().getDimensionTypes();
+    return dimReg.getRawId(dimReg.get(DimensionType.OVERWORLD_ID)) == dimReg
+        .getRawId(p.getEntityWorld().getDimension());
   }
 }
