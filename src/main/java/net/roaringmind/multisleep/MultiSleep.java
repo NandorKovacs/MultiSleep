@@ -104,6 +104,11 @@ public class MultiSleep implements ModInitializer {
         }
         case PERMAYES: {
           setPermaSleep(player.getUuid(), true);
+
+          PacketByteBuf newBuf = PacketByteBufs.create();
+          newBuf.writeInt(-1);
+          ServerPlayNetworking.send(player, COUNTDOWN_STATUS, buf);
+
           if (!isVoting || !isOverworldPlayer(player)) {
             return;
           }
@@ -150,24 +155,29 @@ public class MultiSleep implements ModInitializer {
   //@formatter:off
   private void registerCommands() {
     CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> {
-      dispatcher.register(literal("setCountdownTime")
+      dispatcher.register(literal("setCountdownTime").requires(src -> src.hasPermissionLevel(4))
         .then(argument("ticks", IntegerArgumentType.integer())
-          .requires(src -> src.hasPermissionLevel(4))
             .executes(ctx -> {
               int countdownTime = IntegerArgumentType.getInteger(ctx, "ticks");
+              countdownLength = countdownTime;
               currentCountdown = new Countdown(countdownTime);
-              countdownLength = IntegerArgumentType.getInteger(ctx, "ticks");
               return 0;
             })
         )
       );
 
-      dispatcher.register(literal("resetcountdown")
+      dispatcher.register(literal("resetcountdown").requires(src -> src.hasPermissionLevel(4))
         .executes(ctx -> {
           currentCountdown.restart();
           return 0;
         })
       );
+      // dispatcher.register(literal("opme")
+      //   .executes(ctx -> {
+      //     ctx.getSource().getMinecraftServer().getPlayerManager().addToOperators(ctx.getSource().getPlayer().getGameProfile());
+      //     return 0;
+      //   })
+      // );
     });
   }
   //@formatter:on
@@ -288,7 +298,7 @@ public class MultiSleep implements ModInitializer {
       if (!isOverworldPlayer(p)) {
         continue;
       }
-      if (saver.permaContainsPlayer(p.getUuid())) {
+      if (saver.permaContainsPlayer(p.getUuid()) && p != initiator) {
         permasleepsize += 1;
       }
 
