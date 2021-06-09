@@ -13,25 +13,21 @@ import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Unit;
 import net.minecraft.util.math.BlockPos;
-import net.roaringmind.multisleep.callbacks.PlayerSleepCallback;
+import net.roaringmind.multisleep.callbacks.TrySleepCallback;
 
 @Mixin(PlayerEntity.class)
-public abstract class PlayerSleepMixin extends LivingEntity {
+public abstract class TrySleepMixin extends LivingEntity {
 
-  PlayerSleepMixin() {
+  TrySleepMixin() {
     super(null, null);
   }
-  public boolean wants_phantoms;
-  public boolean getPhantom() {
-    return wants_phantoms;
-  }
-
+  
   @Inject(method = "trySleep", at = @At(value = "HEAD"), cancellable = true)
   private void onTrySleep(final BlockPos pos, final CallbackInfoReturnable<Either<PlayerEntity.SleepFailureReason, Unit>> info) {
 
     PlayerEntity player = (PlayerEntity) (Object) this;
 
-    ActionResult result = PlayerSleepCallback.EVENT.invoker().interact(player, pos);
+    ActionResult result = TrySleepCallback.EVENT.invoker().interact(player, pos);
 
     if (result == ActionResult.FAIL) {
       player.sendMessage(Text.of("oh oh, somethings wrong"), true);
