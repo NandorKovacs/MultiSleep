@@ -77,9 +77,14 @@ public class ClientMultiSleep implements ClientModInitializer {
   private void registerRecievers() {
     ClientPlayNetworking.registerGlobalReceiver(MultiSleep.SEND_STATE_PACKET_ID,
         (client, handler, buf, responseSender) -> {
+          MultiSleep.log("packet recieved");
           int[] states = buf.readIntArray();
-          MinecraftClient.getInstance()
-              .openScreen(new CottonClientScreen(new SleepGUI(intToBool(states[0]), intToBool(states[1]))));
+          MultiSleep.log("opening screen");
+
+          client.execute(() -> MinecraftClient.getInstance()
+              .openScreen(new CottonClientScreen(new SleepGUI(intToBool(states[0]), intToBool(states[1])))));
+
+          MultiSleep.log("opened screen");
         });
 
     ClientPlayNetworking.registerGlobalReceiver(MultiSleep.COUNTDOWN_STATUS, (client, handler, buf, responseSender) -> {

@@ -1,16 +1,12 @@
 package net.roaringmind.multisleep.mixin;
 
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
-import net.minecraft.client.gui.Drawable;
-import net.minecraft.client.gui.Element;
-import net.minecraft.client.gui.Selectable;
 import net.minecraft.client.gui.screen.ingame.AbstractInventoryScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.client.gui.widget.TexturedButtonWidget;
@@ -28,10 +24,7 @@ public abstract class InventoryButtonMixin extends AbstractInventoryScreen<Playe
     super(null, null, null);
   }
 
-  @Shadow
-  protected abstract <T extends Element & Drawable & Selectable> T addDrawableChild(T drawableElement);
-
-  @Inject(method = "init", at = @At(value = "INVOKE_ASSIGN", target = "Lnet/minecraft/client/gui/screen/ingame/InventoryScreen;addButton(Lnet/minecraft/client/gui/widget/AbstractButtonWidget;)Lnet/minecraft/client/gui/widget/AbstractButtonWidget;"))
+  @Inject(method = "init", at = @At(value = "INVOKE_ASSIGN", target = "Lnet/minecraft/client/gui/screen/recipebook/RecipeBookWidget;findLeftEdge(II)I", args = {"log = true"}))
   void addCustomButton(final CallbackInfo info) {
     myButton = new TexturedButtonWidget(this.x + 150, this.height / 2 - 22, 20, 18, 0, 0, 19, SLEEP_BUTTON,
         buttonWidget -> {
