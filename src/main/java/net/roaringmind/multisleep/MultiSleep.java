@@ -422,6 +422,6 @@ public class MultiSleep implements ModInitializer {
     // TODO: this buggs
     
     MutableRegistry<DimensionType> dimReg = p.getServer().getRegistryManager().getMutable(Registry.DIMENSION_TYPE_KEY);
-    return dimReg.getRawId(p.getEntityWorld().getDimension()) != dimReg.getRawId(dimReg.get(DimensionType.OVERWORLD_ID));
+    return dimReg.getRawId(p.getEntityWorld().getDimension()) == dimReg.getRawId(dimReg.get(DimensionType.OVERWORLD_ID));
   }
 }
