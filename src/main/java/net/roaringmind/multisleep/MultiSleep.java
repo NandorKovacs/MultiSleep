@@ -71,7 +71,7 @@ public class MultiSleep implements ModInitializer {
 
       saver = server.getWorld(World.OVERWORLD).getPersistentStateManager().getOrCreate(nbt -> {
         log("saver load start");
-        
+
         Saver saverRes = new Saver();
 
         NbtCompound phantomTag = nbt.getCompound("phantom");
@@ -125,9 +125,9 @@ public class MultiSleep implements ModInitializer {
           PacketByteBuf newBuf = PacketByteBufs.create();
           newBuf.writeInt(-1);
           ServerPlayNetworking.send(player, COUNTDOWN_STATUS, newBuf);
-          
+
           setPermaSleep(player.getUuid(), true);
-          
+
           if (!isVoting || !isOverworldPlayer(player)) {
             return;
           }
@@ -195,19 +195,12 @@ public class MultiSleep implements ModInitializer {
           return 0;
         })
       );
-      dispatcher.register(literal("opme")
-        .executes(ctx -> {
-          ctx.getSource().getMinecraftServer().getPlayerManager().addToOperators(ctx.getSource().getPlayer().getGameProfile());
-          return 0;
-        })
-      );
-    
-      dispatcher.register(literal("saverlog")
-        .executes(ctx -> {
-          saver.log();
-          return 0;
-        })
-      );
+      // dispatcher.register(literal("opme")
+      //   .executes(ctx -> {
+      //     ctx.getSource().getMinecraftServer().getPlayerManager().addToOperators(ctx.getSource().getPlayer().getGameProfile());
+      //     return 0;
+      //   })
+      // );
     });
   }
   //@formatter:on
@@ -260,7 +253,7 @@ public class MultiSleep implements ModInitializer {
     for (ServerPlayerEntity p : server.getPlayerManager().getPlayerList()) {
       if (p.isSleeping() && !p.isSleepingLongEnough()) {
         log(p.getName().asString() + " is sleeping: " + p.isSleeping() + " enough: " + p.isSleepingLongEnough());
-        
+
         trySleep = true;
         return;
       }
@@ -335,7 +328,7 @@ public class MultiSleep implements ModInitializer {
       }
       if (saver.permaContainsPlayer(p.getUuid()) && p != initiator) {
         log(p.getName().asString() + " is perma");
-        
+
         permasleepsize += 1;
       }
 
@@ -420,7 +413,7 @@ public class MultiSleep implements ModInitializer {
 
   public static boolean isOverworldPlayer(PlayerEntity p) {
     // TODO: this buggs
-    
+
     MutableRegistry<DimensionType> dimReg = p.getServer().getRegistryManager().getMutable(Registry.DIMENSION_TYPE_KEY);
     return dimReg.getRawId(p.getEntityWorld().getDimension()) == dimReg.getRawId(dimReg.get(DimensionType.OVERWORLD_ID));
   }
