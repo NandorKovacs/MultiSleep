@@ -21,7 +21,7 @@ public abstract class TrySleepMixin extends LivingEntity {
   TrySleepMixin() {
     super(null, null);
   }
-  
+
   @Inject(method = "trySleep", at = @At(value = "HEAD"), cancellable = true)
   private void onTrySleep(final BlockPos pos, final CallbackInfoReturnable<Either<PlayerEntity.SleepFailureReason, Unit>> info) {
 

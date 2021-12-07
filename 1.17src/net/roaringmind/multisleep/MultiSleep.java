@@ -1,7 +1,7 @@
 package net.roaringmind.multisleep;
 
-import static net.minecraft.server.command.CommandManager.literal;
 import static net.minecraft.server.command.CommandManager.argument;
+import static net.minecraft.server.command.CommandManager.literal;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -22,6 +22,7 @@ import net.fabricmc.fabric.api.gamerule.v1.GameRuleRegistry;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -29,12 +30,13 @@ import net.minecraft.stat.Stats;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.registry.MutableRegistry;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.GameRules.Category;
 import net.minecraft.world.GameRules.IntRule;
 import net.minecraft.world.GameRules.Key;
-import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.World;
+import net.minecraft.world.dimension.DimensionType;
 import net.roaringmind.multisleep.callbacks.TrySleepCallback;
 import net.roaringmind.multisleep.countdown.Countdown;
 import net.roaringmind.multisleep.gui.ClickTypes;
@@ -66,7 +68,24 @@ public class MultiSleep implements ModInitializer {
     registerRecievers();
 
     ServerLifecycleEvents.SERVER_STARTED.register(server -> {
-      saver = server.getWorld(World.OVERWORLD).getPersistentStateManager().getOrCreate(() -> new Saver(MOD_ID), MOD_ID);
+
+      saver = server.getWorld(World.OVERWORLD).getPersistentStateManager().getOrCreate(nbt -> {
+        log("saver load start");
+
+        Saver saverRes = new Saver();
+
+        NbtCompound phantomTag = nbt.getCompound("phantom");
+        for (String k : phantomTag.getKeys()) {
+          saverRes.addPhantomPlayer(UUID.fromString(k));
+        }
+
+        NbtCompound permaTag = nbt.getCompound("perma");
+        for (String k : permaTag.getKeys()) {
+          saverRes.addPermaPlayer(UUID.fromString(k));
+        }
+        log("saver load end");
+        return saverRes;
+      }, () -> new Saver(), MOD_ID);
     });
   }
 
@@ -103,11 +122,11 @@ public class MultiSleep implements ModInitializer {
           return;
         }
         case PERMAYES: {
-          setPermaSleep(player.getUuid(), true);
-
           PacketByteBuf newBuf = PacketByteBufs.create();
           newBuf.writeInt(-1);
-          ServerPlayNetworking.send(player, COUNTDOWN_STATUS, buf);
+          ServerPlayNetworking.send(player, COUNTDOWN_STATUS, newBuf);
+
+          setPermaSleep(player.getUuid(), true);
 
           if (!isVoting || !isOverworldPlayer(player)) {
             return;
@@ -124,6 +143,8 @@ public class MultiSleep implements ModInitializer {
 
     ServerPlayNetworking.registerGlobalReceiver(REQUEST_BUTTONSTATES_PACKET_ID,
         (server, player, handler, buf, responseSender) -> {
+          log("packet recieved");
+
           PacketByteBuf state = PacketByteBufs.create();
           int[] states = new int[2];
           states[0] = boolToInt(saver.phantomContainsPlayer(player.getUuid()));
@@ -131,6 +152,8 @@ public class MultiSleep implements ModInitializer {
           state.writeIntArray(states);
 
           ServerPlayNetworking.send(player, SEND_STATE_PACKET_ID, state);
+
+          log("sending packet to client");
         });
   }
 
@@ -229,11 +252,14 @@ public class MultiSleep implements ModInitializer {
   private static void sleep(MinecraftServer server) {
     for (ServerPlayerEntity p : server.getPlayerManager().getPlayerList()) {
       if (p.isSleeping() && !p.isSleepingLongEnough()) {
+        log(p.getName().asString() + " is sleeping: " + p.isSleeping() + " enough: " + p.isSleepingLongEnough());
+
         trySleep = true;
         return;
       }
 
       if (initiator == p && !p.isSleepingLongEnough()) {
+        log("initiator didnt sleep enough");
         trySleep = true;
         return;
       }
@@ -244,6 +270,7 @@ public class MultiSleep implements ModInitializer {
       p.getStatHandler().setStat(p, Stats.CUSTOM.getOrCreateStat(Stats.TIME_SINCE_REST), 0);
     }
 
+    log("should sleep now");
     ((ServerSleepAccess) (server.getWorld(World.OVERWORLD))).sleep();
     trySleep = false;
   }
@@ -296,21 +323,27 @@ public class MultiSleep implements ModInitializer {
 
     for (PlayerEntity p : server.getPlayerManager().getPlayerList()) {
       if (!isOverworldPlayer(p)) {
+        log(p.getName().asString() + " is not overworld");
         continue;
       }
       if (saver.permaContainsPlayer(p.getUuid()) && p != initiator) {
+        log(p.getName().asString() + " is perma");
+
         permasleepsize += 1;
       }
 
       if (sleepingPlayers.contains(p.getUuid())) {
+        log(p.getName().asString() + " wants sleep");
         sleepingplayercount += 1;
       }
 
+      log(p.getName().asString() + " is a player");
       playercount += 1;
     }
 
     if (playercount == 0) {
       log(Level.FATAL, "playercount is zero");
+      System.exit(69);
     }
 
     float percentYes = ((sleepingplayercount + permasleepsize) / playercount) * (float) 100;
@@ -366,6 +399,7 @@ public class MultiSleep implements ModInitializer {
     } else {
       saver.removePhantomPlayer(playerUUID);
     }
+    saver.log();
   }
 
   public static void setPermaSleep(UUID playerUUID, boolean on) {
@@ -374,11 +408,13 @@ public class MultiSleep implements ModInitializer {
     } else {
       saver.removePermaPlayer(playerUUID);
     }
+    saver.log();
   }
 
   public static boolean isOverworldPlayer(PlayerEntity p) {
-    Registry<DimensionType> dimReg = p.getServer().getRegistryManager().getDimensionTypes();
-    return dimReg.getRawId(dimReg.get(DimensionType.OVERWORLD_ID)) == dimReg
-        .getRawId(p.getEntityWorld().getDimension());
+    // TODO: this buggs
+
+    MutableRegistry<DimensionType> dimReg = p.getServer().getRegistryManager().getMutable(Registry.DIMENSION_TYPE_KEY);
+    return dimReg.getRawId(p.getEntityWorld().getDimension()) == dimReg.getRawId(dimReg.get(DimensionType.OVERWORLD_ID));
   }
 }

@@ -82,7 +82,7 @@ public class ClientMultiSleep implements ClientModInitializer {
           MultiSleep.log("opening screen");
 
           client.execute(() -> MinecraftClient.getInstance()
-              .openScreen(new CottonClientScreen(new SleepGUI(intToBool(states[0]), intToBool(states[1])))));
+              .setScreen(new CottonClientScreen(new SleepGUI(intToBool(states[0]), intToBool(states[1])))));
 
           MultiSleep.log("opened screen");
         });

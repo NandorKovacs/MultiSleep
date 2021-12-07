@@ -3,15 +3,16 @@ package net.roaringmind.multisleep.saver;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.world.PersistentState;
+import net.roaringmind.multisleep.MultiSleep;
 
 public class Saver extends PersistentState {
-  Set<UUID> noPhantomPlayers = new HashSet<>();
-  Set<UUID> permaSleepPlayers = new HashSet<>();
+  private Set<UUID> noPhantomPlayers = new HashSet<>();
+  private Set<UUID> permaSleepPlayers = new HashSet<>();
 
-  public Saver(String key) {
-    super(key);
+  public Saver() {
   }
 
   public void addPhantomPlayer(UUID uuid) {
@@ -46,21 +47,21 @@ public class Saver extends PersistentState {
     return permaSleepPlayers.size();
   }
 
-  @Override
-  public void fromNbt(NbtCompound tag) {
-    NbtCompound phantomTag = tag.getCompound("phantom");
-    for (String k : phantomTag.getKeys()) {
-      noPhantomPlayers.add(UUID.fromString(k));
+  public void log() {
+    MultiSleep.log("perma:");
+    for (UUID uuid : permaSleepPlayers) {
+      MultiSleep.log("          " + uuid);
     }
-
-    NbtCompound permaTag = tag.getCompound("perma");
-    for (String k : permaTag.getKeys()) {
-      permaSleepPlayers.add(UUID.fromString(k));
+  
+    MultiSleep.log("phantom:");
+    for (UUID uuid : noPhantomPlayers) {
+      MultiSleep.log("          " + uuid);
     }
   }
 
   @Override
   public NbtCompound writeNbt(NbtCompound tag) {
+    MultiSleep.log("saver write start");
     NbtCompound phantomTag = new NbtCompound();
     for (UUID uuid : noPhantomPlayers) {
       phantomTag.putBoolean(uuid.toString(), true);
@@ -73,6 +74,8 @@ public class Saver extends PersistentState {
 
     tag.put("phantom", phantomTag);
     tag.put("perma", permaTag);
+
+    MultiSleep.log("saver write over");
     return tag;
   }
 

@@ -251,14 +251,14 @@ public class MultiSleep implements ModInitializer {
 
   private static void sleep(MinecraftServer server) {
     for (ServerPlayerEntity p : server.getPlayerManager().getPlayerList()) {
-      if (p.isSleeping() && !p.isSleepingLongEnough()) {
-        log(p.getName().asString() + " is sleeping: " + p.isSleeping() + " enough: " + p.isSleepingLongEnough());
+      if (p.isSleeping() && !p.canResetTimeBySleeping()) {
+        log(p.getName().asString() + " is sleeping: " + p.isSleeping() + " enough: " + p.canResetTimeBySleeping());
 
         trySleep = true;
         return;
       }
 
-      if (initiator == p && !p.isSleepingLongEnough()) {
+      if (initiator == p && !p.canResetTimeBySleeping()) {
         log("initiator didnt sleep enough");
         trySleep = true;
         return;
@@ -373,7 +373,7 @@ public class MultiSleep implements ModInitializer {
   private boolean shouldSleep(MinecraftServer server) {
     boolean somebodyIndBed = false;
     for (PlayerEntity p : server.getPlayerManager().getPlayerList()) {
-      if (p.isSleepingLongEnough()) {
+      if (p.canResetTimeBySleeping()) {
         somebodyIndBed = true;
         break;
       }

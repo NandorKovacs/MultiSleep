@@ -15,6 +15,7 @@ import net.minecraft.world.GameRules;
 import net.minecraft.world.MutableWorldProperties;
 import net.minecraft.world.World;
 import net.minecraft.world.dimension.DimensionType;
+import net.roaringmind.multisleep.MultiSleep;
 import net.roaringmind.multisleep.util.ServerSleepAccess;
 
 @Mixin(ServerWorld.class)
@@ -42,6 +43,8 @@ public abstract class ServerSleepMixin extends World implements ServerSleepAcces
 
   @Override
   public void sleep() {
+    MultiSleep.log("mixin sleep");
+    
     if (this.getGameRules().getBoolean(GameRules.DO_DAYLIGHT_CYCLE)) {
       long l = this.properties.getTimeOfDay() + 24000L;
       this.setTimeOfDay(l - l % 24000L);
