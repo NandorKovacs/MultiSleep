@@ -43,8 +43,6 @@ public abstract class ServerSleepMixin extends World implements ServerSleepAcces
 
   @Override
   public void sleep() {
-    MultiSleep.log("mixin sleep");
-    
     if (this.getGameRules().getBoolean(GameRules.DO_DAYLIGHT_CYCLE)) {
       long l = this.properties.getTimeOfDay() + 24000L;
       this.setTimeOfDay(l - l % 24000L);

@@ -61,7 +61,6 @@ public class Saver extends PersistentState {
 
   @Override
   public NbtCompound writeNbt(NbtCompound tag) {
-    MultiSleep.log("saver write start");
     NbtCompound phantomTag = new NbtCompound();
     for (UUID uuid : noPhantomPlayers) {
       phantomTag.putBoolean(uuid.toString(), true);
@@ -74,8 +73,6 @@ public class Saver extends PersistentState {
 
     tag.put("phantom", phantomTag);
     tag.put("perma", permaTag);
-
-    MultiSleep.log("saver write over");
     return tag;
   }
 

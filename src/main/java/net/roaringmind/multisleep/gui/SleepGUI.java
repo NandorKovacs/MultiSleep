@@ -12,8 +12,6 @@ import net.roaringmind.multisleep.MultiSleep;
 
 public class SleepGUI extends LightweightGuiDescription {
   public SleepGUI(boolean phantomSwitch, boolean permaSwitch) {
-    MultiSleep.log("sleepgui constructor");
-    
     WGridPanel root = new WGridPanel();
     setRootPanel(root);
     root.setSize(20, 5);

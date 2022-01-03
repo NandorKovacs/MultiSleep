@@ -24,7 +24,7 @@ public abstract class InventoryButtonMixin extends AbstractInventoryScreen<Playe
     super(null, null, null);
   }
 
-  @Inject(method = "init", at = @At(value = "INVOKE_ASSIGN", target = "Lnet/minecraft/client/gui/screen/recipebook/RecipeBookWidget;findLeftEdge(II)I", args = {"log = true"}))
+  @Inject(method = "init", at = @At(value = "INVOKE_ASSIGN", target = "Lnet/minecraft/client/gui/screen/recipebook/RecipeBookWidget;findLeftEdge(II)I"))
   void addCustomButton(final CallbackInfo info) {
     myButton = new TexturedButtonWidget(this.x + 150, this.height / 2 - 22, 20, 18, 0, 0, 19, SLEEP_BUTTON,
         buttonWidget -> {
