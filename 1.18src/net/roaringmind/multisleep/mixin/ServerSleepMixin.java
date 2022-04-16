@@ -10,7 +10,6 @@ import org.spongepowered.asm.mixin.Shadow;
 
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.profiler.Profiler;
-import net.minecraft.util.registry.RegistryEntry;
 import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.world.GameRules;
 import net.minecraft.world.MutableWorldProperties;
@@ -24,7 +23,7 @@ public abstract class ServerSleepMixin extends World implements ServerSleepAcces
 
   ServerSleepMixin(MutableWorldProperties properties, RegistryKey<World> registryRef, final DimensionType dimensionType,
       Supplier<Profiler> profiler, boolean isClient, boolean debugWorld, long seed) {
-    super(properties, registryRef, (RegistryEntry<DimensionType>) dimensionType, profiler, isClient, debugWorld, seed);
+    super(properties, registryRef, dimensionType, profiler, isClient, debugWorld, seed);
   }
 
   @Shadow

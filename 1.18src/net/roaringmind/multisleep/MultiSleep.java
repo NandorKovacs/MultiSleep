@@ -392,7 +392,7 @@ public class MultiSleep implements ModInitializer {
   }
 
   public static boolean isOverworldPlayer(PlayerEntity p) {
-    Registry<DimensionType> dimReg = p.getServer().getRegistryManager().getManaged(Registry.DIMENSION_TYPE_KEY);
+    MutableRegistry<DimensionType> dimReg = p.getServer().getRegistryManager().getMutable(Registry.DIMENSION_TYPE_KEY);
     return dimReg.getRawId(p.getEntityWorld().getDimension()) == dimReg.getRawId(dimReg.get(DimensionType.OVERWORLD_ID));
   }
 }
