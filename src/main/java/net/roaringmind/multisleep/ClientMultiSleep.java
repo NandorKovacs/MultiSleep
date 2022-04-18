@@ -86,13 +86,14 @@ public class ClientMultiSleep implements ClientModInitializer {
 
     ClientPlayNetworking.registerGlobalReceiver(MultiSleep.COUNTDOWN_STATUS, (client, handler, buf, responseSender) -> {
       int bufInt = buf.readInt();
+      int countdownLength = buf.readInt();
       if (bufInt <= -1) {
         countdownStatus = -1;
         previousCountdown = -1;
         return;
       }
 
-      countdownStatus = (int) (((float) client.getWindow().getScaledWidth() / (float) MultiSleep.countdownLength)
+      countdownStatus = (int) (((float) client.getWindow().getScaledWidth() / (float) countdownLength)
           * (float) bufInt);
     });
   }

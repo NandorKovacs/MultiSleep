@@ -32,7 +32,7 @@ public class SleepGUI extends LightweightGuiDescription {
       ClientPlayNetworking.send(MultiSleep.VOTE_PACKET_ID, pckt);
     });
 
-    phantoms.setToggle(!phantomSwitch);
+    phantoms.setToggle(phantomSwitch);
     phantoms.setOnToggle(on -> {
       PacketByteBuf pckt = PacketByteBufs.create();
       if (on) {

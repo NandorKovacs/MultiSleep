@@ -16,7 +16,6 @@ import net.minecraft.world.GameRules;
 import net.minecraft.world.MutableWorldProperties;
 import net.minecraft.world.World;
 import net.minecraft.world.dimension.DimensionType;
-import net.roaringmind.multisleep.MultiSleep;
 import net.roaringmind.multisleep.util.ServerSleepAccess;
 
 @Mixin(ServerWorld.class)

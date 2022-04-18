@@ -11,6 +11,7 @@ import net.roaringmind.multisleep.MultiSleep;
 public class Saver extends PersistentState {
   private Set<UUID> noPhantomPlayers = new HashSet<>();
   private Set<UUID> permaSleepPlayers = new HashSet<>();
+  private Integer countdownLength = 60*20;
 
   public Saver() {
   }
@@ -47,6 +48,15 @@ public class Saver extends PersistentState {
     return permaSleepPlayers.size();
   }
 
+  public void setCountdownLength(int len) {
+    countdownLength = len;
+    markDirty();
+  }
+
+  public int getCountdownLenght() {
+    return countdownLength;
+  }
+
   public void log() {
     MultiSleep.log("perma:");
     for (UUID uuid : permaSleepPlayers) {
@@ -73,6 +83,7 @@ public class Saver extends PersistentState {
 
     tag.put("phantom", phantomTag);
     tag.put("perma", permaTag);
+    tag.putInt("countlen", countdownLength);
     return tag;
   }
 

