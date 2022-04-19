@@ -5,10 +5,10 @@ import net.fabricmc.fabric.api.event.EventFactory;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.ActionResult;
 
-public interface ExitBedCallback {
-  Event<ExitBedCallback> EVENT = EventFactory.createArrayBacked(ExitBedCallback.class,
+public interface StopSleepCallback {
+  Event<StopSleepCallback> EVENT = EventFactory.createArrayBacked(StopSleepCallback.class,
       (listeners) -> (player) -> {
-        for (ExitBedCallback listener : listeners) {
+        for (StopSleepCallback listener : listeners) {
           ActionResult result = listener.interact(player);
           if (result != ActionResult.PASS) {
             return result;

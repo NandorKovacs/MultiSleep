@@ -2,7 +2,7 @@
   "required": true,
   "package": "net.roaringmind.multisleep.mixin",
   "compatibilityLevel": "JAVA_16",
-  "mixins": ["ServerSleepMixin", "TrySleepMixin"],
+  "mixins": ["ServerSleepMixin", "TrySleepMixin", "StopSleepMixin"],
   "client": ["InventoryButtonMixin"],
   "server": [],
   "injectors": {

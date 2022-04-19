@@ -4,6 +4,7 @@ import static net.minecraft.server.command.CommandManager.argument;
 import static net.minecraft.server.command.CommandManager.literal;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -81,11 +82,14 @@ public class MultiSleep implements ModInitializer {
           saverRes.addPermaPlayer(UUID.fromString(k));
         }
         if (nbt.contains("countlen")) {
+        int countlen = nbt.getInt("countlen");
+        log("countlen: " + countlen);
         saverRes.setCountdownLength(nbt.getInt("countlen"));
         }
-
+        log("countdownLength: " + saverRes.getCountdownLenght());
         return saverRes;
       }, () -> new Saver(), MOD_ID);
+      currentCountdown = new Countdown(saver.getCountdownLenght());
     });
   }
 
@@ -184,19 +188,22 @@ public class MultiSleep implements ModInitializer {
             })
         )
       );
-
-      dispatcher.register(literal("resetcountdown").requires(src -> src.hasPermissionLevel(4))
-        .executes(ctx -> {
-          currentCountdown.restart();
-          return 0;
-        })
-      );
-      dispatcher.register(literal("opme")
-        .executes(ctx -> {
-          ctx.getSource().getServer().getPlayerManager().addToOperators(ctx.getSource().getPlayer().getGameProfile());
-          return 0;
-        })
-      );
+      
+      // ------------------------------------------------
+      // FOR USE DURING DEVELOPEMENT, REMOVE FOR BUILDS:
+      // ------------------------------------------------
+      // dispatcher.register(literal("resetcountdown").requires(src -> src.hasPermissionLevel(4))
+      //   .executes(ctx -> {
+      //     currentCountdown.restart();
+      //     return 0;
+      //   })
+      // );
+      // dispatcher.register(literal("opme")
+      //   .executes(ctx -> {
+      //     ctx.getSource().getServer().getPlayerManager().addToOperators(ctx.getSource().getPlayer().getGameProfile());
+      //     return 0;
+      //   })
+      // );
     });
   }
   //@formatter:on
@@ -213,28 +220,35 @@ public class MultiSleep implements ModInitializer {
 
       int countdownStatus = currentCountdown.tick();
 
-      for (PlayerEntity p : world.getPlayers()) {
-        PacketByteBuf buf = PacketByteBufs.create();
-        if (countdownStatus < -1 || saver.permaContainsPlayer(p.getUuid())
-            || (initiator != null && p.getUuid() == initiator.getUuid()) || p.isSleeping() || !isOverworldPlayer(p)) {
-          continue;
-        }
-
-        buf.writeInt(countdownStatus);
-        buf.writeInt(saver.getCountdownLenght());
-        ServerPlayNetworking.send((ServerPlayerEntity) p, COUNTDOWN_STATUS, buf);
-      }
+      sendCountdownStatus(world.getPlayers(), countdownStatus);
 
       if (countdownStatus < 0 && isVoting) {
         if (shouldSleep(world.getServer())) {
           sleep(world.getServer());
         }
-        cancelVoting();
+        cancelVoting(world.getPlayers());
       }
       if (isVoting && !initiator.isSleeping()) {
-        cancelVoting();
+        cancelVoting(world.getPlayers());
       }
     });
+    // StopSleepCallback.EVENT.register((player) -> {
+    //   log(player.getName().toString() + " exited a bed");
+    //   return ActionResult.SUCCESS;
+    // });
+  }
+
+  private static void sendCountdownStatus(List<ServerPlayerEntity> players, int countdownStatus) {
+    for (PlayerEntity p : players) {
+      PacketByteBuf buf = PacketByteBufs.create();
+      if (countdownStatus < -1 || saver.permaContainsPlayer(p.getUuid()) || !isOverworldPlayer(p)) {
+        continue;
+      }
+
+      buf.writeInt(countdownStatus);
+      buf.writeInt(saver.getCountdownLenght());
+      ServerPlayNetworking.send((ServerPlayerEntity) p, COUNTDOWN_STATUS, buf);
+    }
   }
 
   public static boolean isVoting = false;
@@ -348,18 +362,19 @@ public class MultiSleep implements ModInitializer {
 
     if (percentYes >= requiredPercent) {
       sleep(server);
-      cancelVoting();
+      cancelVoting(server.getPlayerManager().getPlayerList());
       return true;
     }
 
     if (percentNo > 100 - requiredPercent) {
-      cancelVoting();
+      cancelVoting(server.getPlayerManager().getPlayerList());
       return false;
     }
     return false;
   }
 
-  private static void cancelVoting() {
+  private static void cancelVoting(List<ServerPlayerEntity> players) {
+    sendCountdownStatus(players, -1);
     isVoting = false;
     awakePlayers = new HashSet<>();
     sleepingPlayers = new HashSet<>();
