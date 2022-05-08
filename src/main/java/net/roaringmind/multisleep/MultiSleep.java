@@ -128,6 +128,7 @@ public class MultiSleep implements ModInitializer {
         case PERMAYES: {
           PacketByteBuf newBuf = PacketByteBufs.create();
           newBuf.writeInt(-1);
+          newBuf.writeInt(saver.getCountdownLenght());
           ServerPlayNetworking.send(player, COUNTDOWN_STATUS, newBuf);
 
           setPermaSleep(player.getUuid(), true);
