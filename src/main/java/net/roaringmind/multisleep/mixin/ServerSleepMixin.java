@@ -21,9 +21,9 @@ import net.roaringmind.multisleep.util.ServerSleepAccess;
 @Mixin(ServerWorld.class)
 public abstract class ServerSleepMixin extends World implements ServerSleepAccess {
 
-  ServerSleepMixin(MutableWorldProperties properties, RegistryKey<World> registryRef, final DimensionType dimensionType,
-      Supplier<Profiler> profiler, boolean isClient, boolean debugWorld, long seed) {
-    super(properties, registryRef, (RegistryEntry<DimensionType>) dimensionType, profiler, isClient, debugWorld, seed);
+  ServerSleepMixin(MutableWorldProperties properties, RegistryKey<World> registryRef, final RegistryEntry<DimensionType> dimensionType,
+      Supplier<Profiler> profiler, boolean isClient, boolean debugWorld, long seed, int maxChainedNeighborUpdates) {
+    super(properties, registryRef, dimensionType, profiler, isClient, debugWorld, seed, maxChainedNeighborUpdates);
   }
 
   @Shadow

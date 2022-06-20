@@ -7,7 +7,7 @@ import io.github.cottonmc.cotton.gui.widget.WToggleButton;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.minecraft.network.PacketByteBuf;
-import net.minecraft.text.LiteralText;
+import net.minecraft.text.Text;
 import net.roaringmind.multisleep.MultiSleep;
 
 public class SleepGUI extends LightweightGuiDescription {
@@ -16,10 +16,10 @@ public class SleepGUI extends LightweightGuiDescription {
     setRootPanel(root);
     root.setSize(20, 5);
 
-    WButton yes = new WButton(new LiteralText("Sleep"));
-    WButton no = new WButton(new LiteralText("Don't sleep"));
-    WToggleButton permaSleep = new WToggleButton(new LiteralText("auto sleep"));
-    WToggleButton phantoms = new WToggleButton(new LiteralText("phantoms"));
+    WButton yes = new WButton(Text.of("Sleep"));
+    WButton no = new WButton(Text.of("Don't sleep"));
+    WToggleButton permaSleep = new WToggleButton(Text.of("auto sleep"));
+    WToggleButton phantoms = new WToggleButton(Text.of("phantoms"));
 
     yes.setOnClick(() -> {
       PacketByteBuf pckt = PacketByteBufs.create();

