@@ -38,6 +38,7 @@ import net.minecraft.world.GameRules.Key;
 import net.minecraft.world.World;
 import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.dimension.DimensionTypes;
+import net.roaringmind.multisleep.callbacks.StopSleepCallback;
 import net.roaringmind.multisleep.callbacks.TrySleepCallback;
 import net.roaringmind.multisleep.countdown.Countdown;
 import net.roaringmind.multisleep.gui.ClickTypes;
@@ -234,10 +235,12 @@ public class MultiSleep implements ModInitializer {
         cancelVoting(world.getPlayers());
       }
     });
-    // StopSleepCallback.EVENT.register((player) -> {
-    //   log(player.getName().toString() + " exited a bed");
-    //   return ActionResult.SUCCESS;
-    // });
+    StopSleepCallback.EVENT.register((player) -> {
+      if (initiator.getUuid() == player.getUuid() && isVoting) {
+        cancelVoting(player.getServer().getPlayerManager().getPlayerList());
+      }
+      return ActionResult.SUCCESS;
+    });
   }
 
   private static void sendCountdownStatus(List<ServerPlayerEntity> players, int countdownStatus) {
