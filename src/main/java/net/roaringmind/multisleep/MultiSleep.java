@@ -3,10 +3,13 @@ package net.roaringmind.multisleep;
 import static net.minecraft.server.command.CommandManager.argument;
 import static net.minecraft.server.command.CommandManager.literal;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 
@@ -29,6 +32,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.stat.Stats;
 import net.minecraft.text.Text;
+import net.minecraft.text.Texts;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
@@ -315,9 +319,9 @@ public class MultiSleep implements ModInitializer {
       if (p == player) {
         continue;
       }
-
-      p.sendMessage(Text.of(player.getName().asOrderedText() + " wants to sleep, please vote"), true);
-      p.sendMessage(Text.of(player.getName().asOrderedText() + " wants to sleep, please vote"), false);
+      Text t = Texts.join(Stream.concat(Stream.of(player.getName()), Stream.of(Text.of("wants to sleep, please vote"))).collect(Collectors.toList()), Text.literal(" "));
+      p.sendMessage(t, true);
+      p.sendMessage(t, false);
     }
 
     currentCountdown.restart();
