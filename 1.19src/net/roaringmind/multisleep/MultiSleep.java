@@ -3,6 +3,7 @@ package net.roaringmind.multisleep;
 import static net.minecraft.server.command.CommandManager.argument;
 import static net.minecraft.server.command.CommandManager.literal;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -10,11 +11,11 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.mojang.brigadier.arguments.IntegerArgumentType;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import com.mojang.brigadier.arguments.IntegerArgumentType;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
@@ -88,10 +89,10 @@ public class MultiSleep implements ModInitializer {
         }
         if (nbt.contains("countlen")) {
         int countlen = nbt.getInt("countlen");
-        // log("countlen: " + countlen);
+        log("countlen: " + countlen);
         saverRes.setCountdownLength(nbt.getInt("countlen"));
         }
-        // log("countdownLength: " + saverRes.getCountdownLenght());
+        log("countdownLength: " + saverRes.getCountdownLenght());
         return saverRes;
       }, () -> new Saver(), MOD_ID);
       currentCountdown = new Countdown(saver.getCountdownLenght());
@@ -239,7 +240,7 @@ public class MultiSleep implements ModInitializer {
       }
     });
     StopSleepCallback.EVENT.register((player) -> {
-      if (isVoting && initiator.getUuid() == player.getUuid()) {
+      if (initiator.getUuid() == player.getUuid() && isVoting) {
         cancelVoting(player.getServer().getPlayerManager().getPlayerList());
       }
       return ActionResult.SUCCESS;
