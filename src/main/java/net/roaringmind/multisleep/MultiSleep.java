@@ -198,18 +198,18 @@ public class MultiSleep implements ModInitializer {
       // ------------------------------------------------
       // FOR USE DURING DEVELOPEMENT, REMOVE FOR BUILDS:
       // ------------------------------------------------
-      dispatcher.register(literal("resetcountdown").requires(src -> src.hasPermissionLevel(4))
-        .executes(ctx -> {
-          currentCountdown.restart();
-          return 0;
-        })
-      );
-      dispatcher.register(literal("opme")
-        .executes(ctx -> {
-          ctx.getSource().getServer().getPlayerManager().addToOperators(ctx.getSource().getPlayer().getGameProfile());
-          return 0;
-        })
-      );
+      // dispatcher.register(literal("resetcountdown").requires(src -> src.hasPermissionLevel(4))
+      //   .executes(ctx -> {
+      //     currentCountdown.restart();
+      //     return 0;
+      //   })
+      // );
+      // dispatcher.register(literal("opme")
+      //   .executes(ctx -> {
+      //     ctx.getSource().getServer().getPlayerManager().addToOperators(ctx.getSource().getPlayer().getGameProfile());
+      //     return 0;
+      //   })
+      // );
     });
   }
   //@formatter:on
